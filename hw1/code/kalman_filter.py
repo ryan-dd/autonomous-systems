@@ -1,7 +1,7 @@
 import numpy as np
 from control import StateSpace, matlab
 
-from hw1.parameters import *
+from hw1.code.parameters import *
 
 
 m = VEHICLE_MASS
