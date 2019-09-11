@@ -13,4 +13,3 @@ C = np.array([[1, 0]])
 D = np.array([[0]])
 state_space = StateSpace(A, B, C, D)
 discrete_time = matlab.c2d(state_space, SAMPLE_PERIOD)
-
