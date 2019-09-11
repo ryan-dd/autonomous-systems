@@ -1,0 +1,29 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage[fleqn]{amsmath}
+\begin{document}
+\section{Equations of motion}
+\begin{equation} m \dot{v} + bv = F(t) \end{equation}
+\begin{equation} \dot{x} = v \end{equation}
+
+\section{Define state variables}
+\begin{equation} x_{1} = x \end{equation}
+\begin{equation} x_{2} = \dot{x} = v \end{equation}
+\begin{equation} \dot{x_{1}} = x_{2} \end{equation}
+\begin{equation} \dot{x_{2}} = \dot{v} = \frac{F(t)}{m} - \frac{bx_{2}}{m} \end{equation}
+\begin{equation} y = x_{1} \end{equation}
+\begin{equation} u = F(t)\end{equation}
+
+\section{State space form}
+\begin{equation}
+\begin{bmatrix} \dot{x_{1}} \\ \dot{x_{2}} \end{bmatrix} 
+= 
+\begin{bmatrix} 0 & 1 \\ 0 & -\frac{b}{m} \end{bmatrix} 
+\begin{bmatrix} x_{1}\\ x_{2} \end{bmatrix} 
++ 
+\begin{bmatrix} 0\\ \frac{1}{m} \end{bmatrix}u
+\end{equation}
+
+\begin{equation} y = \begin{bmatrix} 1 & 0 \end{bmatrix} \begin{bmatrix} x_{1} \\ x_{2} \end{bmatrix} + \begin{bmatrix} 0 \\ 0 \end{bmatrix}u
+\end{equation}
+
+\end{document}
