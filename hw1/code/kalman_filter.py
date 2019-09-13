@@ -37,4 +37,3 @@ def find_Kt(variance_belief, C, Ctranspose, Q):
     first = matmul(variance_belief, Ctranspose)
     second = inv(multi_dot([C, variance_belief, Ctranspose]) + Q)
     return matmul(first, second)
-
