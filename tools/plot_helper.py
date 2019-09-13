@@ -13,7 +13,7 @@ def create_plotting_parameters_for_normal_distribution(mean, variance):
 
     """
     sigma = sqrt(variance)
-    # I set the range of x to be plus or minus 3 sigma since that has 
+    # I set the range of x to be plus or minus 3 sigma since that has
     # the important visual part of the normal distribution
     x = np.linspace(mean - 3*sigma, mean + 3*sigma, 100)
     y = stats.norm.pdf(x, mean, sigma)
