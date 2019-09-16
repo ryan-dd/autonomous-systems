@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import matmul, identity
 from numpy.linalg import multi_dot, inv
-from control import StateSpace, matlab
+from control import StateSpace, matlab, ssdata
 
 from hw1.code.parameters import *
 
@@ -10,22 +10,25 @@ m = VEHICLE_MASS
 b = LINEAR_DRAG_COEFFICIENT
 
 A = np.array([[0, 1], [0, -b/m]])
-Atranspose = np.transpose(A)
 B = np.array([[0], [1/m]])
 C = np.array([[1, 0]])
-Ctranspose = np.transpose(C)
 D = np.array([[0]])
 R = np.array([[MEASUREMENT_NOISE_COVARIANCE]])
 Q = np.array([[PROCESS_NOISE_COVARIANCE_POSITION],
               [PROCESS_NOISE_COVARIANCE_VELOCITY]])
 state_space = StateSpace(A, B, C, D)
-discrete_time = matlab.c2d(state_space, SAMPLE_PERIOD)
+discrete_time_state_space = matlab.c2d(state_space, SAMPLE_PERIOD)
+A, B, C, D = ssdata(discrete_time_state_space)
+Atranspose = A.transpose()
+Ctranspose = C.transpose()
 
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
+    # Prediction step (from controls)
     mean_belief = A*mean_prev + B*ut
     variance_belief = A*variance_prev*Atranspose + R
 
+    # Correction step (from measurements)
     Kt = find_Kt(variance_belief, C, Ctranspose, Q)
 
     corrected_mean_belief = mean_belief + \
