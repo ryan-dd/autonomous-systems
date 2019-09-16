@@ -6,21 +6,22 @@ from control import StateSpace, matlab, ssdata
 from hw1.code.parameters import *
 
 
-m = VEHICLE_MASS
-b = LINEAR_DRAG_COEFFICIENT
+def main():
+    m = VEHICLE_MASS
+    b = LINEAR_DRAG_COEFFICIENT
 
-A = np.array([[0, 1], [0, -b/m]])
-B = np.array([[0], [1/m]])
-C = np.array([[1, 0]])
-D = np.array([[0]])
-R = np.array([[MEASUREMENT_NOISE_COVARIANCE]])
-Q = np.array([[PROCESS_NOISE_COVARIANCE_POSITION],
-              [PROCESS_NOISE_COVARIANCE_VELOCITY]])
-state_space = StateSpace(A, B, C, D)
-discrete_time_state_space = matlab.c2d(state_space, SAMPLE_PERIOD)
-A, B, C, D = ssdata(discrete_time_state_space)
-Atranspose = A.transpose()
-Ctranspose = C.transpose()
+    A = np.array([[0, 1], [0, -b/m]])
+    B = np.array([[0], [1/m]])
+    C = np.array([[1, 0]])
+    D = np.array([[0]])
+    R = np.array([[MEASUREMENT_NOISE_COVARIANCE]])
+    Q = np.array([[PROCESS_NOISE_COVARIANCE_POSITION],
+                  [PROCESS_NOISE_COVARIANCE_VELOCITY]])
+    state_space = StateSpace(A, B, C, D)
+    discrete_time_state_space = matlab.c2d(state_space, SAMPLE_PERIOD)
+    A, B, C, D = ssdata(discrete_time_state_space)
+    Atranspose = A.transpose()
+    Ctranspose = C.transpose()        
 
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
@@ -44,3 +45,7 @@ def find_Kt(variance_belief, C, Ctranspose, Q):
     first = matmul(variance_belief, Ctranspose)
     second = inv(multi_dot([C, variance_belief, Ctranspose]) + Q)
     return matmul(first, second)
+
+
+if __name__ == "__main__":
+    main()
