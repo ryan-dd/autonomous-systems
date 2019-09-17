@@ -7,6 +7,7 @@ from hw1.code.parameters import *
 
 
 def main():
+    # Define state space 
     m = VEHICLE_MASS
     b = LINEAR_DRAG_COEFFICIENT
 
@@ -21,8 +22,18 @@ def main():
     discrete_time_state_space = matlab.c2d(state_space, SAMPLE_PERIOD)
     A, B, C, D = ssdata(discrete_time_state_space)
     Atranspose = A.transpose()
-    Ctranspose = C.transpose()        
+    Ctranspose = C.transpose()
+    
+    # Initial conditions
+    mean_belief = np.array([[0],[0]])
+    variance_belief = np.array([[0],[0]])
+    actual_position = 0
+    actual_velocity = 0
 
+    # Execute kalman filter for 50 seconds
+    for index in range(50*SAMPLE_PERIOD):
+        ut = thrust(index)
+        kalman_filter(mean_belief, variance_belief, ut, ) 
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
     # Prediction step (from controls)
