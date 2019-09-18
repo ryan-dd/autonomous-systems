@@ -1,12 +1,14 @@
 import numpy as np
-from numpy import matmul, identity
+from numpy import identity, dot
 from numpy.linalg import multi_dot, inv
 from scipy.signal import cont2discrete
+from matplotlib import pyplot as plt
 
 from hw1.code.parameters import *
 
+
 def main():
-    # Define state space 
+    # Define state space
     m = VEHICLE_MASS
     b = LINEAR_DRAG_COEFFICIENT
 
@@ -24,56 +26,84 @@ def main():
     D = state_space[3]
     Atranspose = A.transpose()
     Ctranspose = C.transpose()
-    
+
     # Initial beliefs
-    mean_belief = np.array([[0],[0]])
-    variance_belief = np.array([[1, 0],[0, 0.1]])
+    mean_belief = np.array([[0], [0]])
+    variance_belief = np.array([[1, 0], [0, 0.1]])
     # Initial conditions
     xt_current = 0
     vt_current = 0
+
+    # Initialize histories for plotting
     all_xt = [xt_current]
     all_vt = [vt_current]
+    all_mean_belief = [mean_belief]
+    all_variance_belief = [variance_belief]
 
     # Execute kalman filter for 50 seconds
     time_steps = int(50/SAMPLE_PERIOD)
-    for index in range(time_steps):
+    for time_step in range(time_steps):
         # Calculate input
-        ut = thrust(index)
-        # Sensor measurement of state 
+        ut = thrust((time_step+1)*SAMPLE_PERIOD)
+        # Update true state
+        state = np.array([[xt_current], [vt_current]])
+        state_plus_one = dot(A, state)+dot(B, ut)
+        xt_current = state_plus_one[0][0]
+        vt_current = state_plus_one[1][0]
+
+        # Update sensor measurement of state
         zt = xt_current
         # Calculate beliefs
-        mean_belief, variance_belief = kalman_filter(mean_belief, variance_belief, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q )
-        
-        # Update true state
-        state = np.array([[xt_current],[vt_current]])
-        state_plus_one = np.dot(A, state)+np.dot(B, ut)
-        xt_current = state_plus_one[0,0]
-        vt_current = state_plus_one[1,0]
+        mean_belief, variance_belief = kalman_filter(
+            mean_belief, variance_belief, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q)
 
+        # Record outputs for plotting
         all_xt.append(xt_current)
         all_vt.append(vt_current)
+        all_mean_belief.append(mean_belief)
+        all_variance_belief.append(variance_belief)
+    plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief)
+
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
     # Prediction step (from controls)
-    mean_belief = A*mean_prev + B*ut
-    variance_belief = A*variance_prev*Atranspose + R
+    mean_belief = dot(A, mean_prev) + dot(B, ut)
+    variance_belief = multi_dot([A, variance_prev, Atranspose]) + R
 
     # Correction step (from measurements)
     Kt = find_Kt(variance_belief, C, Ctranspose, Q)
 
-    corrected_mean_belief = mean_belief + \
-        matmul(Kt, (zt - matmul(C, mean_belief)))
+    corrected_mean_belief = mean_belief + dot(Kt, (zt - dot(C, mean_belief)))
 
-    first = matmul(Kt, C)
+    first = dot(Kt, C)
     identity_matrix = identity(len(first))
-    corrected_var_belief = matmul((identity_matrix - first), variance_belief)
+    corrected_var_belief = dot((identity_matrix - first), variance_belief)
     return corrected_mean_belief, corrected_var_belief
 
 
 def find_Kt(variance_belief, C, Ctranspose, Q):
-    first = matmul(variance_belief, Ctranspose)
-    second = inv(multi_dot([C, variance_belief, Ctranspose]) + Q)
-    return matmul(first, second)
+    return multi_dot([
+        variance_belief,
+        Ctranspose,
+        inv(multi_dot([C, variance_belief, Ctranspose]) + Q)
+    ])
+
+
+def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief):
+    time_steps=list(range(len(all_xt)))
+    time_steps_in_seconds=[t*SAMPLE_PERIOD for t in time_steps]
+
+    all_mean_belief=np.array(all_mean_belief)
+    all_variance_belief=np.array(all_variance_belief)
+
+    plt.plot(time_steps_in_seconds, all_xt)
+    mean_beliefs_about_position=all_mean_belief[:, 0]
+    plt.plot(time_steps_in_seconds, mean_beliefs_about_position)
+
+    plt.plot(time_steps_in_seconds, all_vt)
+    mean_beliefs_about_velocity=all_mean_belief[:, 1]
+    plt.plot(time_steps_in_seconds, mean_beliefs_about_velocity)
+    plt.show()
 
 
 if __name__ == "__main__":
