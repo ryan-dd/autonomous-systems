@@ -1,10 +1,9 @@
 import numpy as np
 from numpy import matmul, identity
 from numpy.linalg import multi_dot, inv
-from control import StateSpace, matlab, ssdata
+from scipy.signal import cont2discrete
 
 from hw1.code.parameters import *
-
 
 def main():
     # Define state space 
@@ -15,25 +14,44 @@ def main():
     B = np.array([[0], [1/m]])
     C = np.array([[1, 0]])
     D = np.array([[0]])
-    R = np.array([[MEASUREMENT_NOISE_COVARIANCE]])
-    Q = np.array([[PROCESS_NOISE_COVARIANCE_POSITION],
-                  [PROCESS_NOISE_COVARIANCE_VELOCITY]])
-    state_space = StateSpace(A, B, C, D)
-    discrete_time_state_space = matlab.c2d(state_space, SAMPLE_PERIOD)
-    A, B, C, D = ssdata(discrete_time_state_space)
+    Q = np.array([[MEASUREMENT_NOISE_COVARIANCE]])
+    R = np.array([[PROCESS_NOISE_COVARIANCE_POSITION, 0],
+                  [0, PROCESS_NOISE_COVARIANCE_VELOCITY]])
+    state_space = cont2discrete((A, B, C, D), dt=SAMPLE_PERIOD)
+    A = state_space[0]
+    B = state_space[1]
+    C = state_space[2]
+    D = state_space[3]
     Atranspose = A.transpose()
     Ctranspose = C.transpose()
     
-    # Initial conditions
+    # Initial beliefs
     mean_belief = np.array([[0],[0]])
-    variance_belief = np.array([[0],[0]])
-    actual_position = 0
-    actual_velocity = 0
+    variance_belief = np.array([[1, 0],[0, 0.1]])
+    # Initial conditions
+    xt_current = 0
+    vt_current = 0
+    all_xt = [xt_current]
+    all_vt = [vt_current]
 
     # Execute kalman filter for 50 seconds
-    for index in range(50*SAMPLE_PERIOD):
+    time_steps = int(50/SAMPLE_PERIOD)
+    for index in range(time_steps):
+        # Calculate input
         ut = thrust(index)
-        kalman_filter(mean_belief, variance_belief, ut, ) 
+        # Sensor measurement of state 
+        zt = xt_current
+        # Calculate beliefs
+        mean_belief, variance_belief = kalman_filter(mean_belief, variance_belief, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q )
+        
+        # Update true state
+        state = np.array([[xt_current],[vt_current]])
+        state_plus_one = np.dot(A, state)+np.dot(B, ut)
+        xt_current = state_plus_one[0,0]
+        vt_current = state_plus_one[1,0]
+
+        all_xt.append(xt_current)
+        all_vt.append(vt_current)
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
     # Prediction step (from controls)
@@ -47,7 +65,7 @@ def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctransp
         matmul(Kt, (zt - matmul(C, mean_belief)))
 
     first = matmul(Kt, C)
-    identity_matrix = identity(first.size())
+    identity_matrix = identity(len(first))
     corrected_var_belief = matmul((identity_matrix - first), variance_belief)
     return corrected_mean_belief, corrected_var_belief
 
