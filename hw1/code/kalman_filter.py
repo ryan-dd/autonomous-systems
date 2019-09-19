@@ -99,21 +99,30 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief):
     mean_beliefs_about_position = all_mean_belief[:, 0]
     mean_beliefs_about_velocity = all_mean_belief[:, 1]
 
-    fig = plt.figure()
-    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(15, 15))
+    fig.subplots_adjust(hspace=0.6, wspace=0.6)
 
-    plt.subplot(2, 1, 1)
-    plt.plot(time_steps_in_seconds, all_xt)
-    plt.plot(time_steps_in_seconds, mean_beliefs_about_position)
-    plt.title("Position vs Mean belief about Position")
-    plt.legend(["Actual Position", "Mean Position Belief"])
+    ax1.plot(time_steps_in_seconds, all_xt)
+    ax1.plot(time_steps_in_seconds, mean_beliefs_about_position)
+    ax1.set_title("Position vs Mean belief about Position")
+    ax1.legend(["Actual Position", "Mean Position Belief"])
 
-    plt.subplot(2, 1, 2)
-    plt.plot(time_steps_in_seconds, all_vt)
-    plt.plot(time_steps_in_seconds, mean_beliefs_about_velocity)
-    plt.title("Velocity vs Mean Belief about Velocity")
-    plt.legend(["Actual Velocity", "Mean Velocity Belief"])
+    position_error = [abs(xt-mean_beliefs_about_position[i]) for i, xt in enumerate(all_xt)]
+    ax2.plot(time_steps_in_seconds, position_error)
+    ax2.set_title("Error from position and mean belief")
+
+    ax3.plot(time_steps_in_seconds, all_vt)
+    ax3.plot(time_steps_in_seconds, mean_beliefs_about_velocity)
+    ax3.set_title("Velocity vs Mean Belief about Velocity")
+    ax3.legend(["Actual Velocity", "Mean Velocity Belief"])
+
+    velocity_error = [abs(vt-mean_beliefs_about_velocity[i]) for i, vt in enumerate(all_vt)]
+    ax4.plot(time_steps_in_seconds, velocity_error)
+    ax4.set_title("Error from velocity and mean belief")
+
     plt.show()
+    for index in range(time_steps):
+        pass
 
 
 if __name__ == "__main__":
