@@ -5,6 +5,7 @@ from scipy.signal import cont2discrete
 from matplotlib import pyplot as plt
 
 from hw1.code.parameters import *
+from tools.plot_helper import create_plotting_parameters_for_normal_distribution
 
 
 def main():
@@ -39,6 +40,7 @@ def main():
     all_vt = [vt_current]
     all_mean_belief = [mean_belief]
     all_variance_belief = [variance_belief]
+    all_kt = [0]
 
     # Execute kalman filter for 50 seconds
     time_steps = int(50/SAMPLE_PERIOD)
@@ -54,7 +56,7 @@ def main():
         # Update sensor measurement of state
         zt = xt_current
         # Calculate beliefs
-        mean_belief, variance_belief = kalman_filter(
+        mean_belief, variance_belief, kt = kalman_filter(
             mean_belief, variance_belief, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q)
 
         # Record outputs for plotting
@@ -62,7 +64,8 @@ def main():
         all_vt.append(vt_current)
         all_mean_belief.append(mean_belief)
         all_variance_belief.append(variance_belief)
-    plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief)
+        all_kt.append(kt)
+    plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt)
 
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
@@ -78,7 +81,7 @@ def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctransp
     first = dot(Kt, C)
     identity_matrix = identity(len(first))
     corrected_var_belief = dot((identity_matrix - first), variance_belief)
-    return corrected_mean_belief, corrected_var_belief
+    return corrected_mean_belief, corrected_var_belief, Kt
 
 
 def find_Kt(variance_belief, C, Ctranspose, Q):
@@ -89,7 +92,7 @@ def find_Kt(variance_belief, C, Ctranspose, Q):
     ])
 
 
-def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief):
+def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt):
     time_steps = list(range(len(all_xt)))
     time_steps_in_seconds = [t*SAMPLE_PERIOD for t in time_steps]
 
@@ -99,7 +102,8 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief):
     mean_beliefs_about_position = all_mean_belief[:, 0]
     mean_beliefs_about_velocity = all_mean_belief[:, 1]
 
-    fig, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, figsize=(15, 15))
+    # Add static plots
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, 1, figsize=(15, 15))
     fig.subplots_adjust(hspace=0.6, wspace=0.6)
 
     ax1.plot(time_steps_in_seconds, all_xt)
