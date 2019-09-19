@@ -5,7 +5,6 @@ from scipy.signal import cont2discrete
 from matplotlib import pyplot as plt
 
 from hw1.code.parameters import *
-from tools.plot_helper import create_plotting_parameters_for_normal_distribution
 
 
 def main():
@@ -65,7 +64,8 @@ def main():
         all_mean_belief.append(mean_belief)
         all_variance_belief.append(variance_belief)
         all_kt.append(kt)
-    plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt)
+    plot_everything(all_xt, all_vt, all_mean_belief,
+                    all_variance_belief, all_kt)
 
 
 def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q):
@@ -91,11 +91,14 @@ def find_Kt(variance_belief, C, Ctranspose, Q):
         inv(multi_dot([C, variance_belief, Ctranspose]) + Q)
     ])
 
+
 def process_noise(R):
-    return np.random.multivariate_normal([0,0], np.sqrt(R))
+    return np.random.multivariate_normal([0, 0], np.sqrt(R))
+
 
 def measurement_noise(Q):
     return np.random.multivariate_normal([0], np.sqrt(Q))
+
 
 def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt):
     time_steps = list(range(len(all_xt)))
@@ -106,15 +109,15 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
 
     mean_beliefs_about_position = all_mean_belief[:, 0]
     mean_beliefs_about_velocity = all_mean_belief[:, 1]
-    var_beliefs_about_position = all_variance_belief[:,0,0]
-    var_beliefs_about_velocity = all_variance_belief[:,1,0]
+    var_beliefs_about_position = all_variance_belief[:, 0, 0]
+    var_beliefs_about_velocity = all_variance_belief[:, 1, 0]
 
     # Add static plots
     _, axes = plt.subplots(2, 2, figsize=(15, 15))
-    ax1 = axes[0,0]
-    ax2 = axes[1,0]
-    ax3 = axes[1,1]
-    ax4 = axes[0,1]
+    ax1 = axes[0, 0]
+    ax2 = axes[1, 0]
+    ax3 = axes[1, 1]
+    ax4 = axes[0, 1]
 
     ax1.plot(time_steps_in_seconds, all_xt)
     ax1.plot(time_steps_in_seconds, mean_beliefs_about_position, '--')
@@ -122,21 +125,27 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
     ax1.plot(time_steps_in_seconds, mean_beliefs_about_velocity, '--')
     ax1.set_title("State vs Mean belief about State")
     ax1.set_xlabel("Time (s)")
-    ax1.legend(["Actual Position", "Mean Position Belief", "Actual Velocity", "Mean Velocity Belief"])
+    ax1.legend(["Actual Position", "Mean Position Belief",
+                "Actual Velocity", "Mean Velocity Belief"])
 
-    position_error = [abs(xt-mean_beliefs_about_position[i]) for i, xt in enumerate(all_xt)]
+    position_error = [
+        abs(xt-mean_beliefs_about_position[i]) for i, xt in enumerate(all_xt)]
     ax2.plot(time_steps_in_seconds, position_error)
     ax2.plot(time_steps_in_seconds, var_beliefs_about_position, 'b--')
-    ax2.plot(time_steps_in_seconds, np.negative(var_beliefs_about_position), 'b--')
+    ax2.plot(time_steps_in_seconds, np.negative(
+        var_beliefs_about_position), 'b--')
     ax2.legend(["Position Error", "Position Variance"])
     ax2.set_title("Error from position and mean belief")
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("Position (m)")
 
-    velocity_error = [abs(vt-mean_beliefs_about_velocity[i]) for i, vt in enumerate(all_vt)]
+    velocity_error = [
+        abs(vt-mean_beliefs_about_velocity[i])for i, vt in enumerate(all_vt)]
     ax3.plot(time_steps_in_seconds, velocity_error)
-    ax3.plot(time_steps_in_seconds, np.sqrt(var_beliefs_about_velocity)*2, 'y--')
-    ax3.plot(time_steps_in_seconds, np.negative(np.sqrt(var_beliefs_about_velocity)*2), 'y--')
+    ax3.plot(time_steps_in_seconds, np.sqrt(
+        var_beliefs_about_velocity)*2, 'y--')
+    ax3.plot(time_steps_in_seconds, np.negative(
+        np.sqrt(var_beliefs_about_velocity)*2), 'y--')
     ax3.legend(["Velocity Error", "Velocity Variance"])
     ax3.set_title("Error from velocity and mean belief")
     ax3.set_xlabel("Time (s)")
@@ -148,7 +157,6 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
     ax4.set_xlabel("Time (s)")
 
     plt.show()
-
 
 
 if __name__ == "__main__":
