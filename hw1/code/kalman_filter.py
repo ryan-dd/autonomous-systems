@@ -90,19 +90,29 @@ def find_Kt(variance_belief, C, Ctranspose, Q):
 
 
 def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief):
-    time_steps=list(range(len(all_xt)))
-    time_steps_in_seconds=[t*SAMPLE_PERIOD for t in time_steps]
+    time_steps = list(range(len(all_xt)))
+    time_steps_in_seconds = [t*SAMPLE_PERIOD for t in time_steps]
 
-    all_mean_belief=np.array(all_mean_belief)
-    all_variance_belief=np.array(all_variance_belief)
+    all_mean_belief = np.array(all_mean_belief)
+    all_variance_belief = np.array(all_variance_belief)
 
+    mean_beliefs_about_position = all_mean_belief[:, 0]
+    mean_beliefs_about_velocity = all_mean_belief[:, 1]
+
+    fig = plt.figure()
+    fig.subplots_adjust(hspace=0.4, wspace=0.4)
+
+    plt.subplot(2, 1, 1)
     plt.plot(time_steps_in_seconds, all_xt)
-    mean_beliefs_about_position=all_mean_belief[:, 0]
     plt.plot(time_steps_in_seconds, mean_beliefs_about_position)
+    plt.title("Position vs Mean belief about Position")
+    plt.legend(["Actual Position", "Mean Position Belief"])
 
+    plt.subplot(2, 1, 2)
     plt.plot(time_steps_in_seconds, all_vt)
-    mean_beliefs_about_velocity=all_mean_belief[:, 1]
     plt.plot(time_steps_in_seconds, mean_beliefs_about_velocity)
+    plt.title("Velocity vs Mean Belief about Velocity")
+    plt.legend(["Actual Velocity", "Mean Velocity Belief"])
     plt.show()
 
 
