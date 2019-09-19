@@ -40,7 +40,7 @@ def main():
     all_vt = [vt_current]
     all_mean_belief = [mean_belief]
     all_variance_belief = [variance_belief]
-    all_kt = [0]
+    all_kt = []
 
     # Execute kalman filter for 50 seconds
     time_steps = int(50/SAMPLE_PERIOD)
@@ -49,12 +49,12 @@ def main():
         ut = thrust((time_step+1)*SAMPLE_PERIOD)
         # Update true state
         state = np.array([[xt_current], [vt_current]])
-        state_plus_one = dot(A, state)+dot(B, ut)
+        state_plus_one = dot(A, state)+dot(B, ut)+process_noise(R)
         xt_current = state_plus_one[0][0]
         vt_current = state_plus_one[1][0]
 
         # Update sensor measurement of state
-        zt = xt_current
+        zt = xt_current+measurement_noise(Q)
         # Calculate beliefs
         mean_belief, variance_belief, kt = kalman_filter(
             mean_belief, variance_belief, ut, zt, A, B, C, Atranspose, Ctranspose, R, Q)
@@ -74,14 +74,14 @@ def kalman_filter(mean_prev, variance_prev, ut, zt, A, B, C, Atranspose, Ctransp
     variance_belief = multi_dot([A, variance_prev, Atranspose]) + R
 
     # Correction step (from measurements)
-    Kt = find_Kt(variance_belief, C, Ctranspose, Q)
+    kt = find_Kt(variance_belief, C, Ctranspose, Q)
 
-    corrected_mean_belief = mean_belief + dot(Kt, (zt - dot(C, mean_belief)))
+    corrected_mean_belief = mean_belief + dot(kt, (zt - dot(C, mean_belief)))
 
-    first = dot(Kt, C)
+    first = dot(kt, C)
     identity_matrix = identity(len(first))
     corrected_var_belief = dot((identity_matrix - first), variance_belief)
-    return corrected_mean_belief, corrected_var_belief, Kt
+    return corrected_mean_belief, corrected_var_belief, kt
 
 
 def find_Kt(variance_belief, C, Ctranspose, Q):
@@ -91,6 +91,11 @@ def find_Kt(variance_belief, C, Ctranspose, Q):
         inv(multi_dot([C, variance_belief, Ctranspose]) + Q)
     ])
 
+def process_noise(R):
+    return np.random.multivariate_normal([0,0], np.sqrt(R))
+
+def measurement_noise(Q):
+    return np.random.multivariate_normal([0], np.sqrt(Q))
 
 def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt):
     time_steps = list(range(len(all_xt)))
@@ -101,32 +106,49 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
 
     mean_beliefs_about_position = all_mean_belief[:, 0]
     mean_beliefs_about_velocity = all_mean_belief[:, 1]
+    var_beliefs_about_position = all_variance_belief[:,0,0]
+    var_beliefs_about_velocity = all_variance_belief[:,1,0]
 
     # Add static plots
-    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, 1, figsize=(15, 15))
-    fig.subplots_adjust(hspace=0.6, wspace=0.6)
+    _, axes = plt.subplots(2, 2, figsize=(15, 15))
+    ax1 = axes[0,0]
+    ax2 = axes[1,0]
+    ax3 = axes[1,1]
+    ax4 = axes[0,1]
 
     ax1.plot(time_steps_in_seconds, all_xt)
-    ax1.plot(time_steps_in_seconds, mean_beliefs_about_position)
-    ax1.set_title("Position vs Mean belief about Position")
-    ax1.legend(["Actual Position", "Mean Position Belief"])
+    ax1.plot(time_steps_in_seconds, mean_beliefs_about_position, '--')
+    ax1.plot(time_steps_in_seconds, all_vt)
+    ax1.plot(time_steps_in_seconds, mean_beliefs_about_velocity, '--')
+    ax1.set_title("State vs Mean belief about State")
+    ax1.set_xlabel("Time (s)")
+    ax1.legend(["Actual Position", "Mean Position Belief", "Actual Velocity", "Mean Velocity Belief"])
 
     position_error = [abs(xt-mean_beliefs_about_position[i]) for i, xt in enumerate(all_xt)]
     ax2.plot(time_steps_in_seconds, position_error)
+    ax2.plot(time_steps_in_seconds, var_beliefs_about_position, 'b--')
+    ax2.plot(time_steps_in_seconds, np.negative(var_beliefs_about_position), 'b--')
+    ax2.legend(["Position Error", "Position Variance"])
     ax2.set_title("Error from position and mean belief")
-
-    ax3.plot(time_steps_in_seconds, all_vt)
-    ax3.plot(time_steps_in_seconds, mean_beliefs_about_velocity)
-    ax3.set_title("Velocity vs Mean Belief about Velocity")
-    ax3.legend(["Actual Velocity", "Mean Velocity Belief"])
+    ax2.set_xlabel("Time (s)")
+    ax2.set_ylabel("Position (m)")
 
     velocity_error = [abs(vt-mean_beliefs_about_velocity[i]) for i, vt in enumerate(all_vt)]
-    ax4.plot(time_steps_in_seconds, velocity_error)
-    ax4.set_title("Error from velocity and mean belief")
+    ax3.plot(time_steps_in_seconds, velocity_error)
+    ax3.plot(time_steps_in_seconds, np.sqrt(var_beliefs_about_velocity)*2, 'y--')
+    ax3.plot(time_steps_in_seconds, np.negative(np.sqrt(var_beliefs_about_velocity)*2), 'y--')
+    ax3.legend(["Velocity Error", "Velocity Variance"])
+    ax3.set_title("Error from velocity and mean belief")
+    ax3.set_xlabel("Time (s)")
+    ax3.set_ylabel("Velocity (m/s)")
+
+    # There is no kalman gain at time 0
+    ax4.plot(time_steps_in_seconds[1:], np.array(all_kt)[:, 0])
+    ax4.set_title("Kalman filter gain for position")
+    ax4.set_xlabel("Time (s)")
 
     plt.show()
-    for index in range(time_steps):
-        pass
+
 
 
 if __name__ == "__main__":
