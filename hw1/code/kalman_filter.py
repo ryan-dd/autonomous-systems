@@ -151,7 +151,6 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
     ax3.set_xlabel("Time (s)")
     ax3.set_ylabel("Velocity (m/s)")
 
-    # There is no kalman gain at time 0
     ax4.plot(time_steps_in_seconds[1:], np.array(all_kt)[:, 0])
     ax4.plot(time_steps_in_seconds[1:], np.array(all_kt)[:, 1])
     ax4.set_title("Kalman filter gain for position")
