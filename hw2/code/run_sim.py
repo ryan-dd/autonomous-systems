@@ -25,9 +25,8 @@ def main():
         t = time_step*SAMPLE_PERIOD
         robot.update_true_position_and_heading(t)
         ekf.prediction_step(theta_prev, robot.vc, robot.wc)
-        v_measured = robot.v + v_measurement_noise()
-        w_measured = robot.w + w_measurement_noise()
-        ekf.measurement_step(v_measured, w_measured)      
+        
+        ekf.measurement_step(robot.actual_position)      
         plotter.update_plot(robot.x, robot.y, robot.theta)
 
         all_true_state.append(np.copy(np.copy(robot.actual_position)))
@@ -35,12 +34,6 @@ def main():
         all_covariance_belief.append(np.copy(ekf.covariance_belief))
         all_kalman_gain.append(np.copy(ekf.kt))
     plot_everything(all_true_state, all_mean_belief, all_covariance_belief, all_kalman_gain)
-
-def v_measurement_noise():
-    return np.random.normal(0, STD_DEV_LOCATION_RANGE)
-
-def w_measurement_noise():
-    return np.random.normal(0, STD_DEV_LOCATION_BEARING)
 
 def plot_everything(all_true_states, all_mean_belief, all_variance_belief, all_kt):
     time_steps = list(range(len(all_true_states)))

@@ -40,8 +40,7 @@ class EKF:
 
         self.covariance_belief = Gt @ self.covariance_belief @ Gt.T + Vt @ Mt @ Vt.T
 
-    def measurement_step(self, v_measured, w_measured):
-        measurement = np.vstack((v_measured, w_measured))
+    def measurement_step(self, true_state):
         Qt = self.Qt
         for feature in self.all_features:
             f_x = feature[0]
@@ -49,10 +48,14 @@ class EKF:
             mean_x = self.mean_belief[0]
             mean_y = self.mean_belief[1]
             mean_theta = self.mean_belief[2]
+            # Range and bearing from mean belief
             q = (f_x - mean_x)**2 + (f_y - mean_y)**2
             zti = np.array([
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
+             
+            measurement = simulate_measurement(true_state, f_x, f_y)
+
             Ht = np.array([
                 [-(f_x - mean_x)/np.sqrt(q), -(f_y - mean_y)/np.sqrt(q), np.array([0])],
                 [(f_y - mean_y)/q, -(f_x - mean_x)/q, np.array([-1])]]).reshape((2,3))
@@ -61,6 +64,22 @@ class EKF:
             St = Ht @ covariance_belief @ Ht.T + Qt
             Kt = covariance_belief @ Ht.T @ np.linalg.inv(St)
             self.mean_belief = mean_belief + Kt @ (zti - measurement)
-            self.covariance_belief = (np.eye(len(Kt))-Kt @ Ht) @ covariance_belief
-            self.kt = Kt
+            self.covariance_belief = (np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
+        self.kt = Kt
             #pzt = np.linalg.det(2*pi*St)**(-1/2) @ exp(-1/2*(zti - measurement[index]).T @ np.linalg.inv(St) @ (zti - measurement[index]))
+
+def simulate_measurement(true_state, f_x, f_y):
+    true_x = true_state[0]
+    true_y = true_state[1]
+    true_theta = true_state[2]
+    q = (f_x - true_x)**2 + (f_y - true_y)**2
+    zt = np.array([
+                [np.sqrt(q)],
+                [np.arctan2((f_y - true_y), (f_x - true_x)) - true_theta]]).reshape((2,1))
+    return zt + np.vstack((range_measurement_noise(), bearing_measurement_noise()))
+
+def range_measurement_noise():
+    return np.random.normal(0, STD_DEV_LOCATION_RANGE)
+
+def bearing_measurement_noise():
+    return np.random.normal(0, STD_DEV_LOCATION_BEARING)
