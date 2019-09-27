@@ -5,7 +5,7 @@ from hw2.code.parameters import *
 
 class Robot():
     def __init__(self):
-        self._initialize_position_and_heading
+        self._initialize_position_and_heading()
 
     def _initialize_position_and_heading(self):
         self.x = INITIAL_X

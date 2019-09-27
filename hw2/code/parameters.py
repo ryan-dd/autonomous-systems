@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 INITIAL_X = -5 # meters
 INITIAL_Y = -3 # meters
-INITIAL_THETA = 90 # degrees
+INITIAL_THETA = pi # degrees
 
 LANDMARK_1_LOCATION = [6,4]
 LANDMARK_2_LOCATION = [-7, 8]

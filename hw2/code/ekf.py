@@ -10,7 +10,7 @@ class EKF:
         self._change_t = 0.1
         self.mean_belief = np.vstack((INITIAL_X, INITIAL_Y, INITIAL_THETA))
         self.covariance_belief = np.eye(3)
-        self.Qt = np.eye(2)*np.vstack((STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_RANGE**2))
+        self.Qt = np.eye(2)*np.vstack((STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
         self.all_features = np.vstack((LANDMARK_1_LOCATION, LANDMARK_2_LOCATION, LANDMARK_3_LOCATION))
 
     def prediction_step(self, theta_prev, vc, wc):
@@ -24,8 +24,8 @@ class EKF:
         # Jacobian to map noise in control space to state space
         Vt = np.array([
         [(-sin(theta) + sin(theta + wc*change_t))/wc, vc*(sin(theta)-sin(theta + wc*change_t))/(wc**2) + (vc*cos(theta + wc*change_t)*change_t)/wc],
-        [(-cos(theta) + cos(theta + wc*change_t))/wc, vc*(cos(theta)-cos(theta + wc*change_t))/(wc**2) + (vc*sin(theta + wc*change_t)*change_t)/wc]
-        ])
+        [(-cos(theta) + cos(theta + wc*change_t))/wc, vc*(cos(theta)-cos(theta + wc*change_t))/(wc**2) + (vc*sin(theta + wc*change_t)*change_t)/wc],
+        [0, change_t]])
 
         Mt = np.array([
         [ALPHA1*vc**2 + ALPHA2*wc**2, 0],
@@ -51,14 +51,15 @@ class EKF:
             mean_theta = self.mean_belief[2]
             q = (f_x - mean_x)**2 + (f_y - mean_y)**2
             zti = np.array([
-                [sqrt(q)],
-                [atan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]])
+                [np.sqrt(q)],
+                [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
             Ht = np.array([
-                [-(f_x - mean_x)/sqrt(q), -(f_y - mean_y)/sqrt(q), 0],
-                [(f_y - mean_y)/q, -(f_x - mean_x)/q, -1]])
-
-            St = Ht @ self.covariance_belief @ Ht.T + Qt
-            Kt = self.covariance_belief @ Ht.T @ np.linalg.inv(St)
-            self.mean_belief = self.mean_belief + Kt*(zti - measurement)
-            self.covariance_belief = (np.eye(len(Kt))-Kt @ Ht) @ self.covariance_belief
+                [-(f_x - mean_x)/np.sqrt(q), -(f_y - mean_y)/np.sqrt(q), np.array([0])],
+                [(f_y - mean_y)/q, -(f_x - mean_x)/q, np.array([-1])]]).reshape((2,3))
+            covariance_belief = self.covariance_belief
+            mean_belief = self.mean_belief
+            St = Ht @ covariance_belief @ Ht.T + Qt
+            Kt = covariance_belief @ Ht.T @ np.linalg.inv(St)
+            self.mean_belief = mean_belief + Kt @ (zti - measurement)
+            self.covariance_belief = (np.eye(len(Kt))-Kt @ Ht) @ covariance_belief
             #pzt = np.linalg.det(2*pi*St)**(-1/2) @ exp(-1/2*(zti - measurement[index]).T @ np.linalg.inv(St) @ (zti - measurement[index]))
