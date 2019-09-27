@@ -63,7 +63,7 @@ class EKF:
             mean_belief = self.mean_belief
             St = Ht @ covariance_belief @ Ht.T + Qt
             Kt = covariance_belief @ Ht.T @ np.linalg.inv(St)
-            self.mean_belief = mean_belief + Kt @ (zti - measurement)
+            self.mean_belief = mean_belief + Kt @ (measurement - zti)
             self.covariance_belief = (np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
         self.kt = Kt
             #pzt = np.linalg.det(2*pi*St)**(-1/2) @ exp(-1/2*(zti - measurement[index]).T @ np.linalg.inv(St) @ (zti - measurement[index]))
