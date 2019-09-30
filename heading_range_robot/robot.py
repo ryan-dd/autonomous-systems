@@ -1,11 +1,15 @@
-from math import sin, cos, pi
-
-from hw2.code.parameters import *
+from math import sin, cos, pi, sqrt
+import numpy as np
+from numpy.random import normal
 
 
 class Robot():
-    def __init__(self):
-        self._initialize_position_and_heading()
+    def __init__(self, x, y, theta, change_t, alpha1, alpha2, alpha3, alpha4):
+        self._initialize_position_and_heading(x, y, theta, change_t)
+        self.alpha1 = alpha1
+        self.alpha2 = alpha2
+        self.alpha3 = alpha3
+        self.alpha4 = alpha4
 
     def commanded_translational_velocity(self, t):
         return 1 + 0.5*cos(2*pi*(0.2)*t)
@@ -14,19 +18,19 @@ class Robot():
         return -0.2 + 2*cos(2*pi*(0.6)*t)
 
     def translational_noise(self, v, w):
-        translational_error_variance = ALPHA1*(v**2)+ALPHA2*(w**2)
+        translational_error_variance = self.alpha1*(v**2)+self.alpha2*(w**2)
         return normal(0, sqrt(translational_error_variance))
 
     def rotational_noise(self, v, w):
-        rotational_error_variance = ALPHA3*(v**2)+ALPHA4*(w**2)
+        rotational_error_variance = self.alpha3*(v**2)+self.alpha4*(w**2)
         return normal(0, sqrt(rotational_error_variance))
 
-    def _initialize_position_and_heading(self):
-        self.x = INITIAL_X
-        self.y = INITIAL_Y
-        self.theta = INITIAL_THETA
-        self.change_t = SAMPLE_PERIOD
-        self.actual_position = np.vstack((INITIAL_X, INITIAL_Y, INITIAL_THETA))
+    def _initialize_position_and_heading(self, x, y, theta, change_t):
+        self.x = x
+        self.y = y
+        self.theta = theta
+        self.change_t = change_t
+        self.actual_position = np.vstack((x, y, theta))
 
     def update_true_position_and_heading(self, t):
         vc = self.commanded_translational_velocity(t)
@@ -38,7 +42,7 @@ class Robot():
         self.v = v
         self.w = w
         self.actual_position = self._next_position_from_state(
-            self.x, self.y, self.theta, v, w, SAMPLE_PERIOD)
+            self.x, self.y, self.theta, v, w, self.change_t)
 
     def _next_position_from_state(self, x, y, theta, vt, wt, change_t):
         x_next = x + (-vt/wt)*sin(theta) + (vt/wt)*sin(theta + wt*change_t)
