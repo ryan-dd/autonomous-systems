@@ -6,7 +6,7 @@ import numpy as np
 
 from hw2.code.parameters import *
 
-class Plotter:
+class RobotPlotter:
     def __init__(self):
         pass
 

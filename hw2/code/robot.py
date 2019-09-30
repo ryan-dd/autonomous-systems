@@ -37,10 +37,10 @@ class Robot():
         self.wc = wc
         self.v = v
         self.w = w
-        self.actual_position = self.next_position_from_state(
+        self.actual_position = self._next_position_from_state(
             self.x, self.y, self.theta, v, w, SAMPLE_PERIOD)
-        
-    def next_position_from_state(self, x, y, theta, vt, wt, change_t):
+
+    def _next_position_from_state(self, x, y, theta, vt, wt, change_t):
         x_next = x + (-vt/wt)*sin(theta) + (vt/wt)*sin(theta + wt*change_t)
         y_next = y + (vt/wt)*cos(theta) - (vt/wt)*cos(theta + wt*change_t)
         theta_next = theta + wt*change_t
@@ -48,4 +48,3 @@ class Robot():
         self.y = y_next
         self.theta = theta_next
         return np.vstack((x_next, y_next, theta_next))
-        

@@ -6,15 +6,15 @@ from matplotlib import pyplot as plt
 from hw2.code.parameters import *
 from hw2.code.robot import Robot
 from hw2.code.ekf import EKF
-from hw2.code.plotter import Plotter
+from hw2.code.robot_plotter import RobotPlotter
 
 
 def main():
     robot = Robot()
     ekf = EKF()
-    plotter = Plotter()
+    robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
-    plotter.init_plot(robot.x, robot.y, robot.theta)
+    robot_plotter.init_plot(robot.x, robot.y, robot.theta)
 
     all_mean_belief = []
     all_covariance_belief = []
@@ -27,15 +27,15 @@ def main():
         ekf.prediction_step(theta_prev, robot.vc, robot.wc)
         
         ekf.measurement_step(robot.actual_position)      
-        plotter.update_plot(robot.x, robot.y, robot.theta)
+        robot_plotter.update_plot(robot.x, robot.y, robot.theta)
 
         all_true_state.append(np.copy(np.copy(robot.actual_position)))
         all_mean_belief.append(np.copy(ekf.mean_belief))
         all_covariance_belief.append(np.copy(ekf.covariance_belief))
         all_kalman_gain.append(np.copy(ekf.kt))
-    plot_everything(all_true_state, all_mean_belief, all_covariance_belief, all_kalman_gain)
+    plot_summary(all_true_state, all_mean_belief, all_covariance_belief, all_kalman_gain)
 
-def plot_everything(all_true_states, all_mean_belief, all_variance_belief, all_kt):
+def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt):
     time_steps = list(range(len(all_true_states)))
     time_steps_in_seconds = [t*SAMPLE_PERIOD for t in time_steps]
 
