@@ -21,10 +21,9 @@ def main():
     all_kalman_gain = []
     all_true_state = []
     for time_step in range(total_time_steps):
-        theta_prev = ukf.mean_belief[2]
         t = time_step*SAMPLE_PERIOD
         robot.update_true_position_and_heading(t)
-        ukf.prediction_step(theta_prev, robot.vc, robot.wc, robot)
+        ukf.prediction_step(robot)
         
         ukf.measurement_step(robot.actual_position, robot)      
         robot_plotter.update_plot(robot.x, robot.y, robot.theta)

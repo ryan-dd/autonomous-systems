@@ -20,35 +20,27 @@ class UKF:
         self.lambda_ = self.alpha**2*(self.n+kappa)-self.n
         self.gamma = sqrt(self.n + self.lambda_)
 
-    def prediction_step(self, theta_prev, vc, wc, robot):
-        change_t = self._change_t
-        n = self.n
-        gamma = self.gamma
-        alpha = self.alpha
-        beta = self.beta
-
-        chi_a = self.get_sigma_points(vc, wc, gamma)
-        chi_a_bar = []
+    def prediction_step(self, robot):
+        vc = robot.vc
+        wc = robot.wc
+        chi_a = self.get_sigma_points(vc, wc, self.gamma)
+        chi_x = []
         for col in chi_a.T:
-            new_col = robot.next_position_from_state(col[0], col[1], col[2], vc, wc, change_t)
-            chi_a_bar.append(new_col)
-        chi_a_bar = np.array(chi_a_bar) # Note: each row represents a point instead of a column
+            new_col = robot.next_position_from_state(col[0], col[1], col[2], vc, wc, self._change_t)
+            chi_x.append(new_col)
+        chi_x = np.array(chi_x) # Note: each row represents a point instead of a column
+        
         mean_belief = np.zeros((3, 1))
-        covariance_belief = np.zeros((3, 3))
-        for index, sigma_point in enumerate(chi_a_bar):
-            if index == 0:
-                wm = gamma/(n+gamma)
-            else:
-                wm = 1/(2*(n+gamma))
+        for index, sigma_point in enumerate(chi_x):
+            wm = self.get_wm(index)
             mean_belief = np.add(mean_belief, wm*sigma_point)
 
-        for index, sigma_point in enumerate(chi_a_bar):
-            if index == 0: 
-                wc = gamma/(n+gamma) + (1-alpha**2+beta)
-            else:
-                wc = 1/(2*(n+gamma))
+        covariance_belief = np.zeros((3, 3))
+        for index, sigma_point in enumerate(chi_x):
+            wc = self.get_wc(index)
             covariance_belief = np.add(covariance_belief, wc*((sigma_point - mean_belief) @ (sigma_point - mean_belief).T))
-        self.chi_a = chi_a_bar
+        self.chi_x = chi_x
+        self.chi_a = chi_a
         self.mean_belief = mean_belief
         self.covariance_belief = covariance_belief
 
@@ -56,10 +48,12 @@ class UKF:
         for index, feature in enumerate(self.all_features):
             if index == 0:
                 chi_a = self.chi_a
+                chi_x = self.chi_x
             else:
                 chi_a = self.get_sigma_points(robot.vc, robot.wc, self.gamma)
+                chi_x = chi_a[:, :2]
             Zt = []
-            for sigma_point in chi_a:
+            for sigma_point in chi_x:
                 f_x = feature[0]
                 f_y = feature[1]
                 mean_x = sigma_point[0]
@@ -70,6 +64,7 @@ class UKF:
                 Zti = np.array([
                     [np.sqrt(q)],
                     [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2, 1))
+                Zti = np.add(Zti, np.vstack((sigma_point[6], sigma_point[7])))
                 Zt.append(Zti)
                 
             zt_hat = np.zeros((2,1))
