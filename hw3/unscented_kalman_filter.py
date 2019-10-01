@@ -1,8 +1,8 @@
-from math import cos, sin, atan2, exp
+from math import cos, sin, atan2, exp, sqrt
 
 import numpy as np
 
-from hw2.code.parameters import *
+from hw2.code.parameters import ALPHA1, ALPHA2, ALPHA3, ALPHA4, INITIAL_X, INITIAL_Y, INITIAL_THETA, STD_DEV_LOCATION_RANGE, STD_DEV_LOCATION_BEARING, LANDMARKS
 
 
 class UKF:
@@ -13,17 +13,19 @@ class UKF:
         self.Qt = np.eye(2) * np.vstack(
             (STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
         self.all_features = LANDMARKS
+        self.n = 7
+        kappa = 3
+        self.alpha = 0.25
+        self.beta = 2
+        self.lambda_ = self.alpha**2*(self.n+kappa)-self.n
+        self.gamma = sqrt(self.n + self.lambda_)
 
     def prediction_step(self, theta_prev, vc, wc, robot):
         change_t = self._change_t
-        theta = theta_prev
-
-        n = 7
-        kappa = 3
-        alpha = 0.25
-        beta = 2
-        lambda_ = alpha**2*(n+kappa)-n
-        gamma = sqrt(n + lambda_)
+        n = self.n
+        gamma = self.gamma
+        alpha = self.alpha
+        beta = self.beta
 
         chi_a = self.get_sigma_points(vc, wc, gamma)
         chi_a_bar = []
@@ -46,9 +48,53 @@ class UKF:
             else:
                 wc = 1/(2*(n+gamma))
             covariance_belief = np.add(covariance_belief, wc*((sigma_point - mean_belief) @ (sigma_point - mean_belief).T))
+        self.chi_a = chi_a_bar
         self.mean_belief = mean_belief
         self.covariance_belief = covariance_belief
-                 
+
+    def measurement_step(self, true_state, robot):
+        for index, feature in enumerate(self.all_features):
+            if index == 0:
+                chi_a = self.chi_a
+            else:
+                chi_a = self.get_sigma_points(robot.vc, robot.wc, self.gamma)
+            Zt = []
+            for sigma_point in chi_a:
+                f_x = feature[0]
+                f_y = feature[1]
+                mean_x = sigma_point[0]
+                mean_y = sigma_point[1]
+                mean_theta = sigma_point[2]
+                # Predicted range and bearing from sigma point
+                q = (f_x - mean_x)**2 + (f_y - mean_y)**2
+                Zti = np.array([
+                    [np.sqrt(q)],
+                    [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2, 1))
+                Zt.append(Zti)
+                
+            zt_hat = np.zeros((2,1))
+            for index, Zti in enumerate(Zt):
+                wm = self.get_wm(index)
+                zt_hat = np.add(zt_hat, wm*Zti)
+
+            St = np.array((2,2))
+            for index, Zti in enumerate(Zt):
+                wc = self.get_wc(index)
+                St = np.add(St, wc*((Zti - zt_hat) @ (Zti - zt_hat).T))
+
+            covariance_belief = np.zeros((7,2))
+            for index, sigma_point in enumerate(chi_a):
+                wc = self.get_wc(index)
+                covariance_belief = np.add(covariance_belief, wc*((sigma_point - self.mean_belief) @ (Zt[index] - zt_hat).T))
+            Kt = covariance_belief @ np.linalg.inv(St)
+            measurement = simulate_measurement(true_state, f_x, f_y)
+
+            mean_belief = np.add(self.mean_belief, Kt @ (measurement - zt_hat))
+            covariance_belief = self.covariance_belief - Kt @ St @ Kt.T
+            self.mean_belief = mean_belief
+            self.covariance_belief = covariance_belief
+            self.kt = Kt
+
     def get_sigma_points(self, vc, wc, gamma):
         Mt = np.array([
             [ALPHA1*vc**2 + ALPHA2*wc**2, 0],
@@ -67,36 +113,25 @@ class UKF:
             ], axis=1)
         return Chi_a
 
-    def measurement_step(self, true_state, robot):
-        Qt = self.Qt
-        for feature in self.all_features:
-            f_x = feature[0]
-            f_y = feature[1]
-            mean_x = self.mean_belief[0]
-            mean_y = self.mean_belief[1]
-            mean_theta = self.mean_belief[2]
-            # Range and bearing from mean belief
-            q = (f_x - mean_x)**2 + (f_y - mean_y)**2
-            zti = np.array([
-                [np.sqrt(q)],
-                [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2, 1))
+    def get_wc(self, index):
+        gamma = self.gamma
+        alpha = self.alpha
+        beta = self.beta
+        n = self.n 
+        if index == 0: 
+            wc = gamma/(n+gamma) + (1-alpha**2+beta)
+        else:
+            wc = 1/(2*(n+gamma))
+        return wc
 
-            measurement = simulate_measurement(true_state, f_x, f_y)
-
-            Ht = np.array([
-                [-(f_x - mean_x)/np.sqrt(q), -
-                 (f_y - mean_y)/np.sqrt(q), np.array([0])],
-                [(f_y - mean_y)/q, -(f_x - mean_x)/q, np.array([-1])]]).reshape((2, 3))
-            covariance_belief = self.covariance_belief
-            mean_belief = self.mean_belief
-            St = Ht @ covariance_belief @ Ht.T + Qt
-            Kt = covariance_belief @ Ht.T @ np.linalg.inv(St)
-            self.mean_belief = mean_belief + Kt @ (measurement - zti)
-            self.covariance_belief = (
-                np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
-        self.kt = Kt
-        #pzt = np.linalg.det(2*pi*St)**(-1/2) @ exp(-1/2*(zti - measurement[index]).T @ np.linalg.inv(St) @ (zti - measurement[index]))
-
+    def get_wm(self, index):
+        gamma = self.gamma
+        n = self.n 
+        if index == 0:
+            wm = gamma/(n+gamma)
+        else:
+            wm = 1/(2*(n+gamma))
+        return wm   
 
 def simulate_measurement(true_state, f_x, f_y):
     true_x = true_state[0]
