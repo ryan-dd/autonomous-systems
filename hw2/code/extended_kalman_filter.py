@@ -6,8 +6,8 @@ from hw2.code.parameters import *
 
 
 class EKF:
-    def __init__(self):
-        self._change_t = 0.1
+    def __init__(self, sample_period):
+        self._change_t = sample_period
         self.mean_belief = np.vstack((INITIAL_X, INITIAL_Y, INITIAL_THETA))
         self.covariance_belief = np.eye(3)
         self.Qt = np.eye(2)*np.vstack((STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))

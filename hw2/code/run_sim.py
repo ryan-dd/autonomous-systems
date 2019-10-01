@@ -4,14 +4,14 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from hw2.code.parameters import *
-from hw2.code.ekf import EKF
+from hw2.code.extended_kalman_filter import EKF
 from heading_range_robot.robot import Robot
 from heading_range_robot.robot_plotter import RobotPlotter, plot_summary
 
 
 def main():
     robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4)
-    ekf = EKF()
+    ekf = EKF(SAMPLE_PERIOD)
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
     robot_plotter.init_plot(robot.x, robot.y, robot.theta, LANDMARKS)

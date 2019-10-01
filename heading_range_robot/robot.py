@@ -41,14 +41,14 @@ class Robot():
         self.wc = wc
         self.v = v
         self.w = w
-        self.actual_position = self._next_position_from_state(
+        self.actual_position = self.next_position_from_state(
             self.x, self.y, self.theta, v, w, self.change_t)
+        self.x = self.actual_position[0]
+        self.y = self.actual_position[1]
+        self.theta = self.actual_position[2]
 
-    def _next_position_from_state(self, x, y, theta, vt, wt, change_t):
+    def next_position_from_state(self, x, y, theta, vt, wt, change_t):
         x_next = x + (-vt/wt)*sin(theta) + (vt/wt)*sin(theta + wt*change_t)
         y_next = y + (vt/wt)*cos(theta) - (vt/wt)*cos(theta + wt*change_t)
         theta_next = theta + wt*change_t
-        self.x = x_next
-        self.y = y_next
-        self.theta = theta_next
         return np.vstack((x_next, y_next, theta_next))
