@@ -45,15 +45,15 @@ class UKF:
         self.covariance_belief = covariance_belief
 
     def measurement_step(self, true_state, robot):
-        for index, feature in enumerate(self.all_features):
-            if index == 0:
+        for feature_number, feature in enumerate(self.all_features):
+            if feature_number == 0:
                 chi_a = self.chi_a
                 chi_x = self.chi_x
             else:
                 chi_a = self.get_sigma_points(robot.vc, robot.wc, self.gamma)
-                chi_x = chi_a[:, :2]
+                chi_x = chi_a.T[:, :3]
             Zt = []
-            for sigma_point in chi_x:
+            for index, sigma_point in enumerate(chi_x):
                 f_x = feature[0]
                 f_y = feature[1]
                 mean_x = sigma_point[0]
@@ -64,7 +64,7 @@ class UKF:
                 Zti = np.array([
                     [np.sqrt(q)],
                     [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2, 1))
-                Zti = np.add(Zti, np.vstack((sigma_point[6], sigma_point[7])))
+                Zti = np.add(Zti, np.vstack((chi_a.T[index][5], chi_a.T[index][6])))
                 Zt.append(Zti)
                 
             zt_hat = np.zeros((2,1))
@@ -77,11 +77,11 @@ class UKF:
                 wc = self.get_wc(index)
                 St = np.add(St, wc*((Zti - zt_hat) @ (Zti - zt_hat).T))
 
-            covariance_belief = np.zeros((7,2))
-            for index, sigma_point in enumerate(chi_a):
+            covariance_belief_xz = np.zeros((3,2))
+            for index, sigma_point in enumerate(chi_x):
                 wc = self.get_wc(index)
-                covariance_belief = np.add(covariance_belief, wc*((sigma_point - self.mean_belief) @ (Zt[index] - zt_hat).T))
-            Kt = covariance_belief @ np.linalg.inv(St)
+                covariance_belief_xz = np.add(covariance_belief_xz, wc*((sigma_point.reshape((3,1)) - self.mean_belief) @ (Zt[index] - zt_hat).T))
+            Kt = covariance_belief_xz @ np.linalg.inv(St)
             measurement = simulate_measurement(true_state, f_x, f_y)
 
             mean_belief = np.add(self.mean_belief, Kt @ (measurement - zt_hat))
