@@ -39,9 +39,9 @@ class RobotPlotter:
         self.circle.remove()
         # self.arrow.remove()
 
-def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt):
+def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, sample_period):
     time_steps = list(range(len(all_true_states)))
-    time_steps_in_seconds = [t*SAMPLE_PERIOD for t in time_steps]
+    time_steps_in_seconds = [t*sample_period for t in time_steps]
 
     all_true_states = np.array(all_true_states)
     all_mean_belief = np.array(all_mean_belief)

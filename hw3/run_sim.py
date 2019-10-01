@@ -33,7 +33,7 @@ def main():
         all_mean_belief.append(np.copy(ukf.mean_belief))
         all_covariance_belief.append(np.copy(ukf.covariance_belief))
         all_kalman_gain.append(np.copy(ukf.kt))
-    plot_summary(all_true_state, all_mean_belief, all_covariance_belief, all_kalman_gain)
+    plot_summary(all_true_state, all_mean_belief, all_covariance_belief, all_kalman_gain, SAMPLE_PERIOD)
 
 if __name__ == "__main__":
     main()
