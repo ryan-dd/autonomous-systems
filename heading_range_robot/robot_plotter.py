@@ -115,12 +115,15 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax4.set_xlabel("Time (s)")
     ax4.set_ylabel("Theta (radians)")
 
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2])
+    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 0])
+    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 0])
+    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2, 0])
+    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 1])
+    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 1])
+    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2, 1])
     ax5.set_title("Kalman filter gain for position")
-    ax5.legend(["X kalman gain", "Y kalman gain", "Theta Kalman Gain"])
-    ax5.set_xlabel("Time (s)")
+    ax5.legend(["X kalman gain range", "Y kalman gain range", "Theta Kalman Gain range",
+            "X kalman gain bearing", "Y kalman gain bearing", "Theta Kalman Gain bearing"])
 
     plt.show()
     plt.pause(200)
