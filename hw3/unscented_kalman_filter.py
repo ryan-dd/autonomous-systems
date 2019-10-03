@@ -14,8 +14,8 @@ class UKF:
             (STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
         self.all_features = LANDMARKS
         self.n = 7
-        kappa = 3
-        self.alpha = 0.25
+        kappa = 4
+        self.alpha = 0.4
         self.beta = 2
         self.lambda_ = self.alpha**2*(self.n+kappa)-self.n
         self.gamma = sqrt(self.n + self.lambda_)
@@ -24,22 +24,22 @@ class UKF:
         vc = robot.vc
         wc = robot.wc
         chi_a = self.get_sigma_points(vc, wc, self.gamma)
-        chi_x = []
+        chi_x_bar = []
         for col in chi_a.T:
-            new_col = robot.next_position_from_state(col[0], col[1], col[2], vc, wc, self._change_t)
-            chi_x.append(new_col)
-        chi_x = np.array(chi_x) # Note: each row represents a point instead of a column
+            new_col = robot.next_position_from_state(col[0], col[1], col[2], vc+col[3], wc+col[4], self._change_t)
+            chi_x_bar.append(new_col)
+        chi_x_bar = np.array(chi_x_bar) # Note: each row represents a point instead of a column
         
         mean_belief = np.zeros((3, 1))
-        for index, sigma_point in enumerate(chi_x):
+        for index, sigma_point in enumerate(chi_x_bar):
             wm = self.get_wm(index)
             mean_belief = np.add(mean_belief, wm*sigma_point)
 
         covariance_belief = np.zeros((3, 3))
-        for index, sigma_point in enumerate(chi_x):
+        for index, sigma_point in enumerate(chi_x_bar):
             wc = self.get_wc(index)
             covariance_belief = np.add(covariance_belief, wc*((sigma_point - mean_belief) @ (sigma_point - mean_belief).T))
-        self.chi_x = chi_x
+        self.chi_x = chi_x_bar
         self.chi_a = chi_a
         self.mean_belief = mean_belief
         self.covariance_belief = covariance_belief
@@ -104,12 +104,12 @@ class UKF:
         Chi_a = np.concatenate(
             [extended_mean, 
             np.add(extended_mean, gamma*np.linalg.cholesky(extended_covariance)),
-            np.add(extended_mean, gamma*np.linalg.cholesky(extended_covariance))
+            np.add(extended_mean, -gamma*np.linalg.cholesky(extended_covariance))
             ], axis=1)
         return Chi_a
 
     def get_wc(self, index):
-        gamma = self.gamma
+        gamma = self.lambda_
         alpha = self.alpha
         beta = self.beta
         n = self.n 
@@ -120,7 +120,7 @@ class UKF:
         return wc
 
     def get_wm(self, index):
-        gamma = self.gamma
+        gamma = self.lambda_
         n = self.n 
         if index == 0:
             wm = gamma/(n+gamma)
