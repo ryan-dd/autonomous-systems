@@ -72,7 +72,7 @@ class UKF:
                 wm = self.get_wm(index)
                 zt_hat = np.add(zt_hat, wm*Zti)
 
-            St = np.array((2,2))
+            St = np.zeros((2,2))
             for index, Zti in enumerate(Zt):
                 wc = self.get_wc(index)
                 St = np.add(St, wc*((Zti - zt_hat) @ (Zti - zt_hat).T))
