@@ -1,8 +1,8 @@
 from math import cos, pi, sqrt
 
-INITIAL_X = -3 # meters
-INITIAL_Y = -5 # meters
-INITIAL_THETA = pi # degrees
+INITIAL_X = -5 # meters
+INITIAL_Y = -3 # meters
+INITIAL_THETA = pi/2 # degrees
 
 LANDMARK_1_LOCATION = [6, 4]
 LANDMARK_2_LOCATION = [-7, 8]
