@@ -2,7 +2,7 @@ from math import cos, sin, atan2, exp
 
 import numpy as np
 
-from hw2.code.parameters import *
+from heading_range_robot.parameters import *
 
 
 class EKF:

@@ -3,7 +3,7 @@ from math import cos, sin, atan2, sqrt, pi, exp
 import numpy as np
 from matplotlib import pyplot as plt
 
-from hw2.code.parameters import *
+from heading_range_robot.parameters import *
 from hw3.unscented_kalman_filter import UKF
 from heading_range_robot.robot import Robot
 from heading_range_robot.robot_plotter import RobotPlotter, plot_summary

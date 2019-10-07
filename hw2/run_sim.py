@@ -3,8 +3,8 @@ from math import cos, sin, atan2, sqrt, pi, exp
 import numpy as np
 from matplotlib import pyplot as plt
 
-from hw2.code.parameters import *
-from hw2.code.extended_kalman_filter import EKF
+from heading_range_robot.parameters import *
+from hw2.extended_kalman_filter import EKF
 from heading_range_robot.robot import Robot
 from heading_range_robot.robot_plotter import RobotPlotter, plot_summary
 
