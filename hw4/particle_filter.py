@@ -20,13 +20,18 @@ class ParticleFilter:
             particle_x = rand()*10-5
             particle_y = rand()*10-5
             particle_theta = rand()*2*pi
-            all_particles.append([particle_x, particle_y, particle_theta])
+            weight = 1/n
+            all_particles.append([particle_x, particle_y, particle_theta, weight])
         return np.array(all_particles)
 
     def prediction_step(self, robot):
         vc = robot.vc
         wc = robot.wc
-        
+        updated_particles = []
+        for particle in self.particles:
+            new_particle = robot.next_position_from_state(particle[0], particle[1], particle[2], vc, wc, self._change_t)
+            updated_particles.append(new_particle)
+
     def measurement_step(self, robot):
         pass
 

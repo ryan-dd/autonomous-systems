@@ -11,7 +11,7 @@ from heading_range_robot.robot_plotter import RobotPlotter, plot_summary
 
 def main():
     robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4) 
-    pkf = ParticleFilter(SAMPLE_PERIOD, number_of_particles=20)
+    pkf = ParticleFilter(SAMPLE_PERIOD, number_of_particles=1000)
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
     robot_plotter.init_plot(robot.x, robot.y, robot.theta, LANDMARKS)
@@ -25,7 +25,7 @@ def main():
         robot.update_true_position_and_heading(t)
         pkf.prediction_step(robot)
         
-        pkf.measurement_step(robot.actual_position, robot)      
+        pkf.measurement_step(robot)      
         robot_plotter.update_plot(robot.x, robot.y, robot.theta)
 
         all_true_state.append(np.copy(np.copy(robot.actual_position)))
