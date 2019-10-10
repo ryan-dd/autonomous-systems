@@ -90,6 +90,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax2.set_title("Error from X and mean belief")
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("X (m)")
+    ax2.set_ylim(-0.5, 0.5)
 
     y_error = [
         (vt-mean_beliefs_about_y[i])for i, vt in enumerate(true_y)]
@@ -102,6 +103,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax3.set_title("Error from Y and mean belief")
     ax3.set_xlabel("Time (s)")
     ax3.set_ylabel("Y (m)")
+    ax3.set_ylim(-0.5, 0.5)
 
     theta_error = [
         (vt-mean_beliefs_about_theta[i])for i, vt in enumerate(true_theta)]
@@ -114,6 +116,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax4.set_title("Error from theta and mean belief")
     ax4.set_xlabel("Time (s)")
     ax4.set_ylabel("Theta (radians)")
+    ax4.set_ylim(-0.174, 0.174)
 
     ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 0])
     ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 0])

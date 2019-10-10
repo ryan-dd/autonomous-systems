@@ -8,7 +8,7 @@ from heading_range_robot.parameters import ALPHA1, ALPHA2, ALPHA3, ALPHA4, INITI
 class UKF:
     def __init__(self, sample_period):
         self._change_t = sample_period
-        self.mean_belief = np.vstack((INITIAL_X, INITIAL_Y, INITIAL_THETA))
+        self.mean_belief = np.vstack((INITIAL_X+0.5, INITIAL_Y-0.7, INITIAL_THETA-0.05))
         self.covariance_belief = np.eye(3)
         self.Qt = np.eye(2) * np.vstack(
             (STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
@@ -109,23 +109,23 @@ class UKF:
         return Chi_a
 
     def get_wc(self, index):
-        gamma = self.lambda_
+        lambda_ = self.lambda_
         alpha = self.alpha
         beta = self.beta
         n = self.n 
         if index == 0: 
-            wc = gamma/(n+gamma) + (1-alpha**2+beta)
+            wc = lambda_/(n+lambda_) + (1-alpha**2+beta)
         else:
-            wc = 1/(2*(n+gamma))
+            wc = 1/(2*(n+lambda_))
         return wc
 
     def get_wm(self, index):
-        gamma = self.lambda_
+        lambda_ = self.lambda_
         n = self.n 
         if index == 0:
-            wm = gamma/(n+gamma)
+            wm = lambda_/(n+lambda_)
         else:
-            wm = 1/(2*(n+gamma))
+            wm = 1/(2*(n+lambda_))
         return wm   
 
 def simulate_measurement(true_state, f_x, f_y):
