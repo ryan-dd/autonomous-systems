@@ -23,7 +23,7 @@ def main():
     for time_step in range(total_time_steps):
         t = time_step*SAMPLE_PERIOD
         robot.update_true_position_and_heading(t)
-        pkf.prediction_step(robot)
+        pkf.particle_filter(robot)
         
         pkf.measurement_step(robot)      
         robot_plotter.update_plot(robot.x, robot.y, robot.theta)

@@ -50,7 +50,7 @@ class ParticleFilter:
         for m, particle in enumerate(updated_particles):
             U = r + (m*minv)
             while U > c:
-                i = i + 1
+                i += 1
                 c = c + all_weights[i]
 
 
