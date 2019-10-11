@@ -1,9 +1,9 @@
 from random import random as rand
-from math import pi
+from math import pi, sqrt, exp
 
 import numpy as np
 from heading_range_robot.parameters import ALPHA1, ALPHA2, ALPHA3, ALPHA4, INITIAL_X, INITIAL_Y, INITIAL_THETA, STD_DEV_LOCATION_RANGE, STD_DEV_LOCATION_BEARING, LANDMARKS
-
+from sklearn.preprocessing import normalize
 
 class ParticleFilter:
     def __init__(self, sample_period, number_of_particles):
@@ -17,11 +17,10 @@ class ParticleFilter:
     def create_random_particles(self, n):
         all_particles = []
         for _ in range(n):
-            particle_x = rand()*10-5
-            particle_y = rand()*10-5
+            particle_x = rand()*40-20
+            particle_y = rand()*40-20
             particle_theta = rand()*2*pi
-            weight = 1/n
-            all_particles.append([particle_x, particle_y, particle_theta, weight])
+            all_particles.append([particle_x, particle_y, particle_theta])
         return np.array(all_particles)
 
     def particle_filter(self, robot):
@@ -32,26 +31,34 @@ class ParticleFilter:
         for feature in self.all_features:
                 f_x = feature[0]
                 f_y = feature[1]
-                measurement = simulate_measurement(robot.true_state, f_x, f_y)
+                measurement = simulate_measurement(robot.actual_position, f_x, f_y)
                 measurements_from_robot.append(measurement)
         all_weights = []
         for particle in self.particles:
-            new_particle = robot.next_position_from_state(particle[0], particle[1], particle[2], vc, wc, self._change_t)
+            v_perturbed = vc + robot.translational_noise(vc, wc)
+            w_perturbed = wc + robot.rotational_noise(vc, wc)
+            new_particle = robot.next_position_from_state(particle[0], particle[1], particle[2], v_perturbed, w_perturbed, self._change_t)
             weight = self.probability_of_measurement(new_particle, measurements_from_robot)
             all_weights.append(weight)
-            updated_particles.append(new_particle)
+            updated_particles.append(new_particle)    
+        all_weights = all_weights / np.sum(all_weights)
         self.resample_particles(updated_particles, all_weights)
+        self.mean_belief = np.mean(self.particles, axis=0)
+        self.covariance_belief = np.var(self.particles, axis=0)
 
     def resample_particles(self, updated_particles, all_weights):
         final_particles = []
         minv = 1/len(updated_particles)
         r = rand()*minv
         c = all_weights[0]
-        for m, particle in enumerate(updated_particles):
+        i = 0
+        for m in range(len(updated_particles)):
             U = r + (m*minv)
             while U > c:
                 i += 1
                 c = c + all_weights[i]
+            final_particles.append(updated_particles[i])
+        self.particles = final_particles
 
 
     def probability_of_measurement(self, new_particle, measurement_from_robot):
@@ -68,13 +75,13 @@ class ParticleFilter:
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
             error = particle_range_bearing - measurement_from_robot[index]
-            p_r = sample_normal_distribution(error[0], STD_DEV_LOCATION_RANGE)
-            p_b = sample_normal_distribution(error[1], STD_DEV_LOCATION_BEARING)
+            p_r = prob_normal_distribution(error[0], STD_DEV_LOCATION_RANGE**2)
+            p_b = prob_normal_distribution(error[1], STD_DEV_LOCATION_BEARING**2)
             weight *= p_r*p_b
         return weight
 
-def sample_normal_distribution(mean, std_dev):
-    return np.random.normal(mean, std_dev)
+def prob_normal_distribution(mean, variance):
+    return 1/sqrt(2*pi*variance)*exp(-1/2*mean**2/variance)
 
 def simulate_measurement(true_state, f_x, f_y):
     true_x = true_state[0]

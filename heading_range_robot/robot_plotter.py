@@ -8,7 +8,7 @@ class RobotPlotter:
     def __init__(self):
         pass
 
-    def init_plot(self, x, y, theta, landmarks):
+    def init_plot(self, x, y, theta, landmarks, particles=None):
         plt.ion()
         fig, ax = plt.subplots()
         main_ax = ax
@@ -20,12 +20,16 @@ class RobotPlotter:
         main_ax.scatter(
             landmarks[:,0], landmarks[:,1])
         self.plot_robot(x, y, theta)
+        if particles is not None:
+            self.particles_scatter = main_ax.scatter(particles[:,0], particles[:,1])
         plt.draw()
 
-    def update_plot(self, x, y, theta):
+    def update_plot(self, x, y, theta, particles=None):
         self.remove_for_next_step()
         self.plot_robot(x, y, theta)
         self._fig.canvas.draw_idle()
+        if particles is not None:
+            self.particles_scatter.set_offsets(np.array(particles)[:,:2].reshape(1000,2))
         plt.pause(0.0001)
 
     def plot_robot(self, x, y, theta):
@@ -39,7 +43,7 @@ class RobotPlotter:
         self.circle.remove()
         # self.arrow.remove()
 
-def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, sample_period):
+def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_period, all_kt=None):
     time_steps = list(range(len(all_true_states)))
     time_steps_in_seconds = [t*sample_period for t in time_steps]
 
@@ -56,8 +60,12 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     mean_beliefs_about_theta = all_mean_belief[:, 2, 0]
     
     var_beliefs_about_x = all_variance_belief[:, 0, 0]
-    var_beliefs_about_y = all_variance_belief[:, 1, 1]
-    var_beliefs_about_theta = all_variance_belief[:, 2, 2]
+    if all_kt is None:        
+        var_beliefs_about_y = all_variance_belief[:, 1, 0]
+        var_beliefs_about_theta = all_variance_belief[:, 2, 0]
+    else:
+        var_beliefs_about_y = all_variance_belief[:, 1, 1]
+        var_beliefs_about_theta = all_variance_belief[:, 2, 2]
 
     # Add static plots
     _, axes = plt.subplots(3, 2, figsize=(15, 15))
@@ -118,15 +126,16 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax4.set_ylabel("Theta (radians)")
     ax4.set_ylim(-0.174, 0.174)
 
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 0])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 0])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2, 0])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 1])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 1])
-    ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2, 1])
-    ax5.set_title("Kalman filter gain for position")
-    ax5.legend(["X kalman gain range", "Y kalman gain range", "Theta Kalman Gain range",
-            "X kalman gain bearing", "Y kalman gain bearing", "Theta Kalman Gain bearing"])
+    if all_kt is not None:
+        ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 0])
+        ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 0])
+        ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2, 0])
+        ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 0, 1])
+        ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 1, 1])
+        ax5.plot(time_steps_in_seconds, np.array(all_kt)[:, 2, 1])
+        ax5.set_title("Kalman filter gain for position")
+        ax5.legend(["X kalman gain range", "Y kalman gain range", "Theta Kalman Gain range",
+                "X kalman gain bearing", "Y kalman gain bearing", "Theta Kalman Gain bearing"])
 
     plt.show()
     plt.pause(200)

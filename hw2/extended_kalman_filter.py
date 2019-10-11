@@ -53,7 +53,6 @@ class EKF:
             zti = np.array([
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
-             
             measurement = simulate_measurement(true_state, f_x, f_y)
 
             Ht = np.array([

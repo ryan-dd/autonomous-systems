@@ -1,4 +1,5 @@
 from math import cos, sin, atan2, sqrt, pi, exp
+from statistics import mean, variance
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -14,7 +15,7 @@ def main():
     pkf = ParticleFilter(SAMPLE_PERIOD, number_of_particles=1000)
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
-    robot_plotter.init_plot(robot.x, robot.y, robot.theta, LANDMARKS)
+    robot_plotter.init_plot(robot.x, robot.y, robot.theta, LANDMARKS, particles=pkf.particles)
 
     all_mean_belief = []
     all_covariance_belief = []
@@ -22,17 +23,15 @@ def main():
     all_true_state = []
     for time_step in range(total_time_steps):
         t = time_step*SAMPLE_PERIOD
-        robot.update_true_position_and_heading(t)
-        pkf.particle_filter(robot)
-        
-        pkf.measurement_step(robot)      
-        robot_plotter.update_plot(robot.x, robot.y, robot.theta)
+        robot.update_true_position_and_heading(t)        
+        pkf.particle_filter(robot)      
+        robot_plotter.update_plot(robot.x, robot.y, robot.theta, particles=pkf.particles)
 
-        all_true_state.append(np.copy(np.copy(robot.actual_position)))
+        all_true_state.append(np.copy(robot.actual_position))
         all_mean_belief.append(np.copy(pkf.mean_belief))
         all_covariance_belief.append(np.copy(pkf.covariance_belief))
-        all_kalman_gain.append(np.copy(pkf.kt))
-    plot_summary(all_true_state, all_mean_belief, all_covariance_belief, all_kalman_gain, SAMPLE_PERIOD)
+    plot_summary(all_true_state, all_mean_belief, all_covariance_belief, SAMPLE_PERIOD)
 
 if __name__ == "__main__":
+
     main()
