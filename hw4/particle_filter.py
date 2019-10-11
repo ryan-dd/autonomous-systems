@@ -1,4 +1,4 @@
-from random import rand
+from random import random as rand
 from math import pi
 
 import numpy as np
@@ -24,18 +24,29 @@ class ParticleFilter:
             all_particles.append([particle_x, particle_y, particle_theta, weight])
         return np.array(all_particles)
 
-    def prediction_step(self, robot):
+    def particle_filter(self, robot):
         vc = robot.vc
         wc = robot.wc
         updated_particles = []
+        measurements_from_robot = [] 
+        for feature in self.all_features:
+                f_x = feature[0]
+                f_y = feature[1]
+                measurement = simulate_measurement(robot.true_state, f_x, f_y)
+                measurements_from_robot.append(measurement)
         for particle in self.particles:
             new_particle = robot.next_position_from_state(particle[0], particle[1], particle[2], vc, wc, self._change_t)
-            weight = self.probability_of_measurement(robot.true_state, new_particle)
+            weight = self.probability_of_measurement(new_particle, measurements_from_robot)
             new_particle.append(weight)
             updated_particles.append(new_particle)
+        self.resample_particles()
 
-    def probability_of_measurement(self, true_state, new_particle):
-        for feature in self.all_features:
+    def resample_particles(self):
+        pass
+
+    def probability_of_measurement(self, new_particle, measurement_from_robot):
+        weight = 1.0
+        for index, feature in enumerate(self.all_features):
             f_x = feature[0]
             f_y = feature[1]
             mean_x = new_particle[0]
@@ -43,11 +54,17 @@ class ParticleFilter:
             mean_theta = new_particle[2]
             # Range and bearing from mean belief
             q = (f_x - mean_x)**2 + (f_y - mean_y)**2
-            zti = np.array([
+            particle_range_bearing = np.array([
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
-            measurement = simulate_measurement(true_state, f_x, f_y)
-        return zti-measurement
+            error = particle_range_bearing - measurement_from_robot[index]
+            p_r = sample_normal_distribution(error[0], STD_DEV_LOCATION_RANGE)
+            p_b = sample_normal_distribution(error[1], STD_DEV_LOCATION_BEARING)
+            weight *= p_r*p_b
+        return weight
+
+def sample_normal_distribution(mean, std_dev):
+    return np.random.normal(mean, std_dev)
 
 def simulate_measurement(true_state, f_x, f_y):
     true_x = true_state[0]
