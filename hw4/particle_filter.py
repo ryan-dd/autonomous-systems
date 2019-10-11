@@ -34,15 +34,25 @@ class ParticleFilter:
                 f_y = feature[1]
                 measurement = simulate_measurement(robot.true_state, f_x, f_y)
                 measurements_from_robot.append(measurement)
+        all_weights = []
         for particle in self.particles:
             new_particle = robot.next_position_from_state(particle[0], particle[1], particle[2], vc, wc, self._change_t)
             weight = self.probability_of_measurement(new_particle, measurements_from_robot)
-            new_particle.append(weight)
+            all_weights.append(weight)
             updated_particles.append(new_particle)
-        self.resample_particles()
+        self.resample_particles(updated_particles, all_weights)
 
-    def resample_particles(self):
-        pass
+    def resample_particles(self, updated_particles, all_weights):
+        final_particles = []
+        minv = 1/len(updated_particles)
+        r = rand()*minv
+        c = all_weights[0]
+        for m, particle in enumerate(updated_particles):
+            U = r + (m*minv)
+            while U > c:
+                i = i + 1
+                c = c + all_weights[i]
+
 
     def probability_of_measurement(self, new_particle, measurement_from_robot):
         weight = 1.0
