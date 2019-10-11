@@ -30,10 +30,24 @@ class ParticleFilter:
         updated_particles = []
         for particle in self.particles:
             new_particle = robot.next_position_from_state(particle[0], particle[1], particle[2], vc, wc, self._change_t)
+            weight = self.probability_of_measurement(robot.true_state, new_particle)
+            new_particle.append(weight)
             updated_particles.append(new_particle)
 
-    def measurement_step(self, robot):
-        pass
+    def probability_of_measurement(self, true_state, new_particle):
+        for feature in self.all_features:
+            f_x = feature[0]
+            f_y = feature[1]
+            mean_x = new_particle[0]
+            mean_y = new_particle[1]
+            mean_theta = new_particle[2]
+            # Range and bearing from mean belief
+            q = (f_x - mean_x)**2 + (f_y - mean_y)**2
+            zti = np.array([
+                [np.sqrt(q)],
+                [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
+            measurement = simulate_measurement(true_state, f_x, f_y)
+        return zti-measurement
 
 def simulate_measurement(true_state, f_x, f_y):
     true_x = true_state[0]
