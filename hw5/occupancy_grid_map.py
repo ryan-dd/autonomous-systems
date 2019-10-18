@@ -11,7 +11,7 @@ L_OCC = log(0.6/0.4)
 L_FREE = log(0.4/0.6)
 
 data = loadmat("hw5/state_meas_data.mat")
-state = data['X']
+states = data['X']
 ranges = data['z'][0]
 bearings = data['z'][1]
 pointing_angles = data['thk'][0]
@@ -24,13 +24,13 @@ for i in range(100):
         # Insert log odds related to p = 0.5
         grid_map[i].append(L0)
 
-for i in range(len(ranges)):
+for time_step in range(len(ranges)):
     for i in range(100):
         for j in range(100):
             grid_cell_probability = grid_map[i][j]
             cell_occupied = check_grid_occupancy(i, j)
             if cell_occupied:
-                grid_map[i][j] = grid_cell_probability + inverse_range_sensor_model([i, j], xt, ranges, bearings, pointing_angles) - L0
+                grid_map[i][j] = grid_cell_probability + inverse_range_sensor_model([i, j], states, ranges, bearings, pointing_angles) - L0
 
 
 def check_grid_occupancy(i, j):
