@@ -1,6 +1,9 @@
 from scipy.io import loadmat
 import numpy as np
 from math import radians, log
+from matplotlib import pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
 
 OFFSET_DISTANCE = np.sqrt(1+1)
 ALPHA = 1
@@ -52,3 +55,23 @@ for time_step in range(len(ranges)):
             grid_cell_log_odds = grid_map[i][j]
             grid_map[i][j] = grid_cell_log_odds + inverse_range_sensor_model([i, j], state_t, ranges_t, bearings_t, pointing_angles) - L0
 
+# Get original probabilities as log
+log_odds = np.array(grid_map)
+probabilities = 1 - 1/(1+np.exp(log_odds))
+
+# Plot the probabilities in a map
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+_x = list(range(100))
+_y = _x
+_xx, _yy = np.meshgrid(_x, _y)
+x, y = _xx.ravel(), _yy.ravel()
+
+top = probabilities.ravel()
+bottom = np.zeros_like(top)
+width = depth = 1
+
+ax.bar3d(x, y, bottom, width, depth, top, shade=True)
+ax.set_title('Shaded')
+
+plt.show()
