@@ -5,13 +5,13 @@ from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 
-OFFSET_DISTANCE = np.sqrt(1+1)
+OFFSET_DISTANCE = 0.5
 ALPHA = 1
 BETA = radians(5)
 Z_MAX = 150
 L0 = log(1.0)
-L_OCC = log(0.6/0.4)
-L_FREE = log(0.4/0.6)
+L_OCC = log(0.7/0.3)
+L_FREE = log(0.3/0.7)
 
 data = loadmat("hw5/state_meas_data.mat")
 states = data['X']
