@@ -6,17 +6,15 @@ from heading_range_robot.parameters import *
 
 
 class EIF:
-    def __init__(self, sample_period):
-        self._change_t = sample_period
+    def __init__(self, all_features):
         self.mean_belief = np.vstack((INITIAL_X, INITIAL_Y, INITIAL_THETA))
         self.covariance_belief = np.eye(3)
         self.info_matrix = np.linalg.inv(self.covariance_belief)
         self.info_vector =  self.info_matrix @ self.mean_belief
         self.Qt = np.diag((0.2, 0.1))
-        self.all_features = np.vstack((LANDMARK_1_LOCATION, LANDMARK_2_LOCATION, LANDMARK_3_LOCATION))
+        self.all_features = all_features
 
-    def prediction_step(self, vc, wc):
-        change_t = self._change_t
+    def prediction_step(self, vc, wc, change_t):
         prev_mean_belief = np.linalg.inv(self.info_matrix) @ self.info_vector
         theta = prev_mean_belief[2]
         # Jacobian of ut at xt-1
@@ -44,9 +42,9 @@ class EIF:
         self.info_matrix = np.linalg.inv(Gt @ np.linalg.inv(self.info_matrix) @ Gt.T + Vt @ Mt @ Vt.T)
         self.info_vector = self.info_matrix @ mean_belief
         
-    def measurement_step(self, true_state):
+    def measurement_step(self, feature_measurements):
         Qt = self.Qt
-        for feature in self.all_features:
+        for index, feature in enumerate(self.all_features):
             mean_belief = np.linalg.inv(self.info_matrix) @ self.info_vector
             f_x = feature[0]
             f_y = feature[1]
@@ -59,7 +57,7 @@ class EIF:
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
             
-            measurement = simulate_measurement(true_state, f_x, f_y)
+            measurement = feature_measurements[index]
 
             Ht = np.array([
                 [-(f_x - mean_x)/np.sqrt(q), -(f_y - mean_y)/np.sqrt(q), np.array([0])],
