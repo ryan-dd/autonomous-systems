@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 OFFSET_DISTANCE = 0.5
 ALPHA = 1
-BETA = radians(5)
+BETA = radians(1)
 Z_MAX = 150
 L0 = log(1.0)
 L_OCC = log(0.7/0.3)
@@ -30,8 +30,8 @@ for i in range(100):
 
 # Define sensor model
 def inverse_range_sensor_model(cell, state_t, z_ranges, z_bearings, z_pointing_angles):
-    xi = cell[0] + OFFSET_DISTANCE
-    yi = cell[1] + OFFSET_DISTANCE
+    xi = cell[0]
+    yi = cell[1]
     x = state_t[0]
     y = state_t[1]
     theta = state_t[2]
@@ -46,7 +46,7 @@ def inverse_range_sensor_model(cell, state_t, z_ranges, z_bearings, z_pointing_a
         return L_FREE
 
 # Update the map at every time step
-for time_step in range(len(ranges)):
+for time_step in range(len(ranges[0])):
     state_t = states[:, time_step]
     ranges_t = ranges[:, time_step]
     bearings_t = bearings[:, time_step]
@@ -60,18 +60,21 @@ log_odds = np.array(grid_map)
 probabilities = 1 - 1/(1+np.exp(log_odds))
 
 # Plot the probabilities in a map
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-_x = list(range(100))
-_y = _x
-_xx, _yy = np.meshgrid(_x, _y)
-x, y = _xx.ravel(), _yy.ravel()
-
-top = probabilities.ravel()
-bottom = np.zeros_like(top)
-width = depth = 1
-
-ax.bar3d(x, y, bottom, width, depth, top, shade=True)
-ax.set_title('Shaded')
-
+plt.imshow(probabilities.T, cmap='Blues', interpolation='nearest', origin='lower')
 plt.show()
+
+# fig = plt.figure()
+# ax = fig.add_subplot(111, projection='3d')
+# _x = list(range(100))
+# _y = _x
+# _xx, _yy = np.meshgrid(_x, _y)
+# x, y = _xx.ravel(), _yy.ravel()
+
+# top = probabilities.ravel()
+# bottom = np.zeros_like(top)
+# width = depth = 1
+
+# ax.bar3d(x, y, bottom, width, depth, top, shade=True)
+# ax.set_title('Shaded')
+
+# plt.show()
