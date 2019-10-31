@@ -12,8 +12,8 @@ from tools.wrap import wrap
 def main():
     data = loadmat('midterm/midterm_data.mat')
     # Unpack data
-    #true_state = wrap(data['X_tr'], dim=2)
     true_state = data['X_tr']
+    true_state = wrap(data['X_tr'], dim=2)
     landmarks = data['m']
     w_c = data['om_c'][0]
     w = data['om'][0]
