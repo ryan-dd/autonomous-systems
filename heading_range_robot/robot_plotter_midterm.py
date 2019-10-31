@@ -8,7 +8,7 @@ class RobotPlotter:
     def __init__(self):
         pass
 
-    def init_plot(self, x, y, theta, landmarks, particles=None):
+    def init_plot(self, true_state, estimated_state, landmarks, particles=None):
         plt.ion()
         fig, ax = plt.subplots()
         main_ax = ax
@@ -19,21 +19,26 @@ class RobotPlotter:
         landmarks = np.array(landmarks)
         main_ax.scatter(
             landmarks[:,0], landmarks[:,1])
-        true_hist = main_ax.plot(np.array([[x]]), np.array([[y]]))
-        self.plot_robot(x, y, theta)
-        if particles is not None:
-            self.particles_scatter = main_ax.scatter(particles[:,0], particles[:,1])
-        self.data = np.array([[x, y]])
+        true_x = true_state[0][0]
+        true_y = true_state[1][0]
+        est_x = estimated_state[0]
+        est_y = estimated_state[1]
+
+        self.true_hist = main_ax.plot(true_x, true_y)
+        self.estimated_hist = main_ax.plot(est_x, est_y)
+        self.plot_robot(true_x, true_y, true_state[2][0])
+        self.true_data = np.array([[true_x, true_y]])
+        self.est_data = np.array([est_x, est_y]).reshape(1,2)
         plt.draw()
 
-    def update_plot(self, x, y, theta, particles=None):
+    def update_plot(self, true_state, estimated_state):
         self.remove_for_next_step()
-        self.plot_robot(x, y, theta)
-        self.data = np.append(self.data, np.array([[x,y]]).reshape(1,2), axis=0)
-        self._main_ax.plot(self.data[:,0], self.data[:,1])
+        self.plot_robot(true_state[0], true_state[1], true_state[2])
+        self.true_data = np.append(self.true_data, np.array([true_state[0], true_state[1]]).reshape(1,2), axis=0)
+        self.est_data = np.append(self.est_data, np.array([estimated_state[0], estimated_state[1]]).reshape(1,2), axis=0)
+        self._main_ax.plot(self.true_data[:,0], self.true_data[:,1])
+        self._main_ax.plot(self.est_data[:,0], self.est_data[:,1])
         self._fig.canvas.draw_idle()
-        if particles is not None:
-            self.particles_scatter.set_offsets(np.array(particles)[:,:2].reshape(1000,2))
         plt.pause(0.0001)
 
     def plot_robot(self, x, y, theta):
