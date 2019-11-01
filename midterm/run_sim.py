@@ -46,13 +46,19 @@ def main():
         all_covariance_belief.append(np.copy(eif.covariance_belief))
         all_information_vector.append(np.copy(eif.info_vector))
     # Plot summary
-    plot_summary(true_state, all_mean_belief, all_covariance_belief, t)
+    plot_summary(true_state, all_mean_belief, all_covariance_belief, t, all_information_vector)
 
 
-def plot_summary(all_true_states, all_mean_belief, all_variance_belief, time_steps_in_seconds, all_kt=None):
+def plot_summary(all_true_states, all_mean_belief, all_variance_belief, time_steps_in_seconds, all_info_vector):
+    # TODO information vector plots
     all_true_states = np.array(all_true_states)
     all_mean_belief = np.array(all_mean_belief).reshape((301, 3)).T
     all_variance_belief = np.array(all_variance_belief)
+    all_info_vector = np.array(all_info_vector).T.reshape((3,-1))
+
+    info_x = all_info_vector[0]
+    info_y = all_info_vector[1]
+    info_theta = all_info_vector[2]
 
     true_x = all_true_states[0]
     true_y = all_true_states[1]
@@ -95,7 +101,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, time_ste
     ax2.set_title("Error from X and mean belief")
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("X (m)")
-    # ax2.set_ylim(-0.5, 0.5)
+    ax2.set_ylim(-0.5, 0.5)
 
     y_error = [
         (vt-mean_beliefs_about_y[i])for i, vt in enumerate(true_y)]
@@ -108,7 +114,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, time_ste
     ax3.set_title("Error from Y and mean belief")
     ax3.set_xlabel("Time (s)")
     ax3.set_ylabel("Y (m)")
-    # ax3.set_ylim(-0.5, 0.5)
+    ax3.set_ylim(-0.5, 0.5)
 
     theta_error = [
         (vt-mean_beliefs_about_theta[i])for i, vt in enumerate(true_theta)]
@@ -121,7 +127,16 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, time_ste
     ax4.set_title("Error from theta and mean belief")
     ax4.set_xlabel("Time (s)")
     ax4.set_ylabel("Theta (radians)")
-    # ax4.set_ylim(-0.174, 0.174)
+    ax4.set_ylim(-0.5, 0.5)
+
+    plt.subplots()
+    plt.plot(time_steps_in_seconds, info_x)
+    plt.plot(time_steps_in_seconds, info_y)
+    plt.plot(time_steps_in_seconds, info_theta)
+    plt.title("Information Vector")
+    plt.legend(["X", "Y", "Theta"])
+    plt.xlabel("Time (s)")
+    plt.ylabel("Value of information")
 
     plt.show()
     plt.pause(200)

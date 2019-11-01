@@ -10,7 +10,7 @@ class EIF:
         self.info_matrix = np.linalg.inv(self.covariance_belief)
         self.info_vector =  self.info_matrix @ self.mean_belief
         self.Qt = np.diag((0.2**2, 0.1**2))
-        self.Mt = np.diag((0.15**2,0.1**2))
+        self.Mt = np.diag((0.15**2, 0.1**2))
         self.all_features = all_features
 
     def prediction_step(self, vc, wc, change_t):
@@ -36,7 +36,9 @@ class EIF:
         mean_belief = wrap(mean_belief, index=2)
 
         Mt = self.Mt 
-        self.info_matrix = np.linalg.inv(Gt @ np.linalg.inv(self.info_matrix) @ Gt.T + Vt @ Mt @ Vt.T)
+        self.info_matrix = np.linalg.inv(
+            Gt @ np.linalg.inv(self.info_matrix) @ Gt.T + Vt @ Mt @ Vt.T
+            )
         self.info_vector = self.info_matrix @ mean_belief
         
     def measurement_step(self, feature_measurements):
@@ -55,7 +57,6 @@ class EIF:
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
             h = wrap(h, index=1)
-            # h = h + np.array([[np.random.normal(0, 0.2)], [np.random.normal(0, 0.1)]])
             
             measurement = feature_measurements[:, index].reshape((2,1))
             measurement = wrap(measurement, index=1)
@@ -63,8 +64,13 @@ class EIF:
             Ht = np.array([
                 [-(f_x - mean_x)/np.sqrt(q), -(f_y - mean_y)/np.sqrt(q), np.array([0])],
                 [(f_y - mean_y)/q, -(f_x - mean_x)/q, np.array([-1])]]).reshape((2,3))
+                
             self.info_matrix = self.info_matrix + Ht.T @ np.linalg.inv(Qt) @ Ht
-            self.info_vector = self.info_vector + Ht.T @ np.linalg.inv(Qt) @ (measurement - h + (Ht @ mean_belief))
+            self.info_vector = (
+                self.info_vector + 
+                Ht.T @ np.linalg.inv(Qt) @ 
+                (measurement - h + (Ht @ mean_belief))
+            )
         self.covariance_belief = np.linalg.inv(self.info_matrix)
         self.mean_belief = self.covariance_belief @ self.info_vector
-
+        self.mean_belief = wrap(self.mean_belief, index=2)
