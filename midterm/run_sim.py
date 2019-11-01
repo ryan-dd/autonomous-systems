@@ -13,7 +13,7 @@ def main():
     data = loadmat('midterm/midterm_data.mat')
     # Unpack data
     true_state = data['X_tr']
-    true_state = wrap(data['X_tr'], dim=2)
+    true_state = wrap(data['X_tr'], index=2)
     landmarks = data['m']
     w_c = data['om_c'][0]
     w = data['om'][0]
@@ -42,7 +42,7 @@ def main():
 
         robot_plotter.update_plot(true_state[:, time_step], eif.mean_belief)
 
-        all_mean_belief.append(np.copy(wrap(eif.mean_belief, dim=2)))
+        all_mean_belief.append(np.copy(wrap(eif.mean_belief, index=2)))
         all_covariance_belief.append(np.copy(eif.covariance_belief))
         all_information_vector.append(np.copy(eif.info_vector))
     # Plot summary

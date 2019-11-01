@@ -3,7 +3,6 @@ from math import cos, sin, atan2, exp, radians
 import numpy as np
 from tools.wrap import wrap
 
-
 class EIF:
     def __init__(self, all_features):
         self.mean_belief = np.vstack((-5, 0, radians(90)))
@@ -16,7 +15,7 @@ class EIF:
 
     def prediction_step(self, vc, wc, change_t):
         prev_mean_belief = np.linalg.inv(self.info_matrix) @ self.info_vector
-        prev_mean_belief = wrap(prev_mean_belief, dim=2)
+        prev_mean_belief = wrap(prev_mean_belief, index=2)
         theta = prev_mean_belief[2]
         # Jacobian of ut at xt-1
         Gt = np.array([
@@ -34,7 +33,7 @@ class EIF:
         [vc*sin(theta)*change_t],
         [wc*change_t]
         ])
-        mean_belief = wrap(mean_belief, dim=2)
+        mean_belief = wrap(mean_belief, index=2)
 
         Mt = self.Mt 
         self.info_matrix = np.linalg.inv(Gt @ np.linalg.inv(self.info_matrix) @ Gt.T + Vt @ Mt @ Vt.T)
@@ -44,7 +43,7 @@ class EIF:
         Qt = self.Qt
         for index, feature in enumerate(self.all_features):
             mean_belief = np.linalg.inv(self.info_matrix) @ self.info_vector
-            mean_belief = wrap(mean_belief, dim=2)
+            mean_belief = wrap(mean_belief, index=2)
             f_x = feature[0]
             f_y = feature[1]
             mean_x = mean_belief[0]
@@ -55,10 +54,11 @@ class EIF:
             h = np.array([
                 [np.sqrt(q)],
                 [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
-            h = wrap(h, dim=1)
+            h = wrap(h, index=1)
+            # h = h + np.array([[np.random.normal(0, 0.2)], [np.random.normal(0, 0.1)]])
             
             measurement = feature_measurements[:, index].reshape((2,1))
-            measurement = wrap(measurement, dim=1)
+            measurement = wrap(measurement, index=1)
             
             Ht = np.array([
                 [-(f_x - mean_x)/np.sqrt(q), -(f_y - mean_y)/np.sqrt(q), np.array([0])],

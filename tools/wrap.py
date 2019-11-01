@@ -8,9 +8,9 @@ def wrap_angle(angle, l_wrap, u_wrap):
         angle1 += angle_range
     return angle1
 
-def wrap(angle, dim=None):
-    if dim:
-        angle[dim] -= 2*np.pi * np.floor((angle[dim] + np.pi) / (2*np.pi))
+def wrap(angle, index=None):
+    if index:
+        angle[index] -= 2*np.pi * np.floor((angle[index] + np.pi) / (2*np.pi))
     else:
         angle -= 2*np.pi * np.floor((angle + np.pi) / (2*np.pi))
     return angle
