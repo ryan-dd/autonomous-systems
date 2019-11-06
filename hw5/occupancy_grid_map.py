@@ -7,7 +7,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 OFFSET_DISTANCE = 0.5
 ALPHA = 1
-BETA = radians(1)
+BETA = radians(5)
 Z_MAX = 150
 L0 = log(1.0)
 L_OCC = log(0.7/0.3)
@@ -38,6 +38,8 @@ def inverse_range_sensor_model(cell, state_t, z_ranges, z_bearings, z_pointing_a
     r = np.sqrt((xi-x)**2 + (yi-y)**2)
     phi = np.arctan2(yi - y, xi - x) - theta
     k = np.argmin(np.abs(np.subtract(phi, z_pointing_angles)))
+    if np.isnan(z_ranges[k]):
+        return L0
     if r > np.min([Z_MAX, z_ranges[k] + ALPHA/2]) or np.abs(phi - z_pointing_angles[k]) > BETA/2:
         return L0
     elif z_ranges[k] < Z_MAX and np.abs(r - z_ranges[k]) < ALPHA/2:
@@ -62,19 +64,3 @@ probabilities = 1 - 1/(1+np.exp(log_odds))
 # Plot the probabilities in a map
 plt.imshow(probabilities.T, cmap='Blues', interpolation='nearest', origin='lower')
 plt.show()
-
-# fig = plt.figure()
-# ax = fig.add_subplot(111, projection='3d')
-# _x = list(range(100))
-# _y = _x
-# _xx, _yy = np.meshgrid(_x, _y)
-# x, y = _xx.ravel(), _yy.ravel()
-
-# top = probabilities.ravel()
-# bottom = np.zeros_like(top)
-# width = depth = 1
-
-# ax.bar3d(x, y, bottom, width, depth, top, shade=True)
-# ax.set_title('Shaded')
-
-# plt.show()
