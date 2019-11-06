@@ -27,7 +27,7 @@ class RobotPlotter:
         ax.scatter(
             landmarks[:,0], landmarks[:,1])
         self.estimated_landmarks = ax.scatter(estimated_state[3:, :], estimated_state[3:, :])
-        
+        self.error_bounds_ellipses = []
         true_x = true_robot_state[0][0]
         true_y = true_robot_state[1][0]
         est_x = estimated_state[0]
@@ -50,11 +50,12 @@ class RobotPlotter:
         self._ax.plot(self.robot_path_data[-2:,0], self.robot_path_data[-2:,1], c='b')
         self._ax.plot(self.est_path_data[-2:,0], self.est_path_data[-2:,1], c='g')
         est_landmarks = np.append(estimated_state[3:][::2], estimated_state[4:][::2], axis=1)
+        diag_to_plot = np.diagonal(covariance_belief)
+        for index, est_landmark in enumerate(est_landmarks):
+            cov = np.diag((diag_to_plot[2*(index+1)+1], diag_to_plot[2*(index+1)+2]))
+            self.error_bounds_ellipses.append(confidence_ellipse(est_landmark[0], est_landmark[1], cov, self._ax))
+        self.error_bounds_ellipses.append(confidence_ellipse(est_landmark[0], est_landmark[1], cov, self._ax))
         self.estimated_landmarks.set_offsets(est_landmarks)
-        # self.robot_path_hist.set_xdata(self.robot_path_data[:,0])
-        # self.robot_path_hist.set_ydata(self.robot_path_data[:,1])
-        # self.estimated_path_hist.set_xdata(self.est_path_data[:,0])
-        # self.estimated_path_hist.set_ydata(self.est_path_data[:,1])
 
         self._fig.canvas.draw_idle()
         plt.pause(0.0001)
@@ -69,8 +70,11 @@ class RobotPlotter:
     def remove_for_next_step(self):
         self.circle.remove()
         # self.arrow.remove()
+        for shape in self.error_bounds_ellipses:
+            shape.remove()
+        self.error_bounds_ellipses = []
 
-def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_period, all_kt=None):
+def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, sample_period):
     time_steps = list(range(len(all_true_states)))
     time_steps_in_seconds = [t*sample_period for t in time_steps]
 
@@ -87,12 +91,8 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
     mean_beliefs_about_theta = all_mean_belief[:, 2, 0]
     
     var_beliefs_about_x = all_variance_belief[:, 0, 0]
-    if all_kt is None:        
-        var_beliefs_about_y = all_variance_belief[:, 1, 0]
-        var_beliefs_about_theta = all_variance_belief[:, 2, 0]
-    else:
-        var_beliefs_about_y = all_variance_belief[:, 1, 1]
-        var_beliefs_about_theta = all_variance_belief[:, 2, 2]
+    var_beliefs_about_y = all_variance_belief[:, 1, 0]
+    var_beliefs_about_theta = all_variance_belief[:, 2, 0]
 
     # Add static plots
     _, axes = plt.subplots(3, 2, figsize=(15, 15))
@@ -168,53 +168,21 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
     plt.pause(200)
 
 # https://matplotlib.org/devdocs/gallery/statistics/confidence_ellipse.html
-def confidence_ellipse(cov, ax, n_std=3.0, facecolor='none', **kwargs):
-    """
-    Create a plot of the covariance confidence ellipse of *x* and *y*.
-
-    Parameters
-    ----------
-    x, y : array-like, shape (n, )
-        Input data.
-
-    ax : matplotlib.axes.Axes
-        The axes object to draw the ellipse into.
-
-    n_std : float
-        The number of standard deviations to determine the ellipse's radiuses.
-
-    Returns
-    -------
-    matplotlib.patches.Ellipse
-
-    Other parameters
-    ----------------
-    kwargs : `~matplotlib.patches.Patch` properties
-    """
-    if x.size != y.size:
-        raise ValueError("x and y must be the same size")
-
+def confidence_ellipse(mean_x, mean_y, cov, ax, n_std=2.0, facecolor='r', **kwargs):
     pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
     # Using a special case to obtain the eigenvalues of this
-    # two-dimensionl dataset.
+    # two-dimensional dataset.
     ell_radius_x = np.sqrt(1 + pearson)
     ell_radius_y = np.sqrt(1 - pearson)
     ellipse = Ellipse((0, 0),
         width=ell_radius_x * 2,
         height=ell_radius_y * 2,
         facecolor=facecolor,
+        alpha=0.5,
         **kwargs)
 
-    # Calculating the stdandard deviation of x from
-    # the squareroot of the variance and multiplying
-    # with the given number of standard deviations.
     scale_x = np.sqrt(cov[0, 0]) * n_std
-    mean_x = np.mean(x)
-
-    # calculating the stdandard deviation of y ...
     scale_y = np.sqrt(cov[1, 1]) * n_std
-    mean_y = np.mean(y)
-
     transf = transforms.Affine2D() \
         .rotate_deg(45) \
         .scale(scale_x, scale_y) \
