@@ -21,9 +21,9 @@ pointing_angles = data['thk'][0]
 
 # Make grid map 100 x 100
 grid_map = []
-for i in range(100):
+for i in range(102):
     grid_map.append([])
-    for j in range(100):
+    for j in range(102):
         # Insert log odds related to p = 0.5, which correlates to no information about whether
         # the cell is occupied
         grid_map[i].append(L0)
@@ -52,8 +52,8 @@ for time_step in range(len(ranges[0])):
     state_t = states[:, time_step]
     ranges_t = ranges[:, time_step]
     bearings_t = bearings[:, time_step]
-    for i in range(100):
-        for j in range(100):
+    for i in range(102):
+        for j in range(102):
             grid_cell_log_odds = grid_map[i][j]
             grid_map[i][j] = grid_cell_log_odds + inverse_range_sensor_model([i, j], state_t, ranges_t, bearings_t, pointing_angles) - L0
 

@@ -20,8 +20,8 @@ class RobotPlotter:
         ax.set_title("State vs estimated state")
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
-        ax.set_xlim(-10,10)
-        ax.set_ylim(-10,10)
+        ax.set_xlim(-30,30)
+        ax.set_ylim(-30,30)
 
         landmarks = np.array(landmarks)
         ax.scatter(
@@ -52,9 +52,11 @@ class RobotPlotter:
         est_landmarks = np.append(estimated_state[3:][::2], estimated_state[4:][::2], axis=1)
         diag_to_plot = np.diagonal(covariance_belief)
         for index, est_landmark in enumerate(est_landmarks):
-            cov = np.diag((diag_to_plot[2*(index+1)+1], diag_to_plot[2*(index+1)+2]))
+            i1 = 2*(index+1)+1
+            i2 = 2*(index+1)+3
+            cov = covariance_belief[i1:i2,i1:i2]
+            #cov = np.diag((diag_to_plot[2*(index+1)+1], diag_to_plot[2*(index+1)+2]))
             self.error_bounds_ellipses.append(confidence_ellipse(est_landmark[0], est_landmark[1], cov, self._ax))
-        self.error_bounds_ellipses.append(confidence_ellipse(est_landmark[0], est_landmark[1], cov, self._ax))
         self.estimated_landmarks.set_offsets(est_landmarks)
 
         self._fig.canvas.draw_idle()
@@ -120,7 +122,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax2.plot(time_steps_in_seconds, x_error)
     ax2.plot(time_steps_in_seconds, np.sqrt(var_beliefs_about_x)*2, 'b--')
     ax2.plot(time_steps_in_seconds, np.negative(
-        np.sqrt(var_beliefs_about_x)*2), 'b--')
+        np.sqrt(np.abs(var_beliefs_about_x))*2), 'b--')
     ax2.legend(["X Error", "X Variance"])
     ax2.set_title("Error from X and mean belief")
     ax2.set_xlabel("Time (s)")
@@ -131,9 +133,9 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
         (vt-mean_beliefs_about_y[i])for i, vt in enumerate(true_y)]
     ax3.plot(time_steps_in_seconds, y_error)
     ax3.plot(time_steps_in_seconds, 
-        np.sqrt(var_beliefs_about_y)*2, 'y--')
+        np.sqrt(np.abs(var_beliefs_about_y))*2, 'y--')
     ax3.plot(time_steps_in_seconds, 
-        np.negative(np.sqrt(var_beliefs_about_y)*2), 'y--')
+        np.negative(np.sqrt(np.abs(var_beliefs_about_y))*2), 'y--')
     ax3.legend(["Y Error", "Y Variance"])
     ax3.set_title("Error from Y and mean belief")
     ax3.set_xlabel("Time (s)")
@@ -144,9 +146,9 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
         (vt-mean_beliefs_about_theta[i])for i, vt in enumerate(true_theta)]
     ax4.plot(time_steps_in_seconds, theta_error)
     ax4.plot(time_steps_in_seconds, 
-        np.sqrt(var_beliefs_about_theta)*2, 'y--')
+        np.sqrt(np.abs(var_beliefs_about_theta))*2, 'y--')
     ax4.plot(time_steps_in_seconds, 
-        np.negative(np.sqrt(var_beliefs_about_theta)*2), 'y--')
+        np.negative(np.sqrt(np.abs(var_beliefs_about_theta))*2), 'y--')
     ax4.legend(["Theta Error", "Theta Variance"])
     ax4.set_title("Error from theta and mean belief")
     ax4.set_xlabel("Time (s)")
@@ -164,6 +166,8 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
         ax5.legend(["X kalman gain range", "Y kalman gain range", "Theta Kalman Gain range",
                 "X kalman gain bearing", "Y kalman gain bearing", "Theta Kalman Gain bearing"])
 
+    sc = plt.imshow(all_variance_belief[-1], cmap='Blues', interpolation='nearest', origin='lower')
+    plt.colorbar(sc)
     plt.show()
     plt.pause(200)
 
