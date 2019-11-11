@@ -7,7 +7,7 @@ from heading_range_robot.parameters import *
 from tools.wrap import wrap
 
 
-class EKF:
+class EKF_SLAM:
     def __init__(self, sample_period):
         self._change_t = sample_period
         
@@ -15,15 +15,16 @@ class EKF:
         self.all_features = np.random.random((20,2))*40-20
         self.n_features = self.all_features.shape[0]
 
-        robot_state_mean_belief = np.vstack((INITIAL_X, INITIAL_Y, INITIAL_THETA))
+        robot_state_mean_belief = np.vstack((0, 0, 0))
         landmark_state_mean_belief = np.zeros((self.n_features*2,1))
         self.mean_belief = np.append(robot_state_mean_belief, landmark_state_mean_belief, axis=0)
 
-        robot_state_covariances = np.diag((STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
+        robot_state_covariances = np.diag((0, 0, 0))
         landmark_covariances = np.diag(([100000]*self.n_features*2))
         self.covariance_belief = block_diag(robot_state_covariances, landmark_covariances)
         
         self.initialized = [False]*self.n_features
+        self.R = np.diag((0.2**2, 0.2**2, 0.5**2))
 
     def prediction_step(self, vc, wc):       
         Fx = np.append(np.eye(3), np.zeros((3, self.n_features*2)), axis=1)
@@ -53,7 +54,7 @@ class EKF:
         ])
         Rt = Vt @ Mt @ Vt.T
 
-        self.covariance_belief = Gt @ self.covariance_belief @ Gt.T + Fx.T @ Rt @ Fx
+        self.covariance_belief = Gt @ self.covariance_belief @ Gt.T + Fx.T @ self.R @ Fx
 
     def measurement_step(self, true_state):
         Qt = self.Qt

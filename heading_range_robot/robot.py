@@ -29,10 +29,10 @@ class Robot():
         self.alpha4 = alpha4
 
     def commanded_translational_velocity(self, t):
-        return 1 + 0.5*sin(2*pi*(0.3)*t)
+        return 2 + 0.5*sin(2*pi*(0.2)*t)
 
     def commanded_rotational_velocity(self, t):
-        return -0.2 + 2*cos(2*pi*(1)*t)
+        return -0.5 + 0.2*cos(2*pi*0.6*t)
 
     def translational_noise(self, v, w):
         translational_error_variance = self.alpha1*(v**2)+self.alpha2*(w**2)
