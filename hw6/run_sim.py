@@ -14,7 +14,7 @@ def main():
     ekf = EKF_SLAM(SAMPLE_PERIOD)
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
-    robot_plotter.init_plot(robot.actual_position, ekf.mean_belief, LANDMARKS)
+    robot_plotter.init_plot(robot.actual_position, ekf.mean_belief, ekf.all_features)
 
     all_mean_belief = []
     all_covariance_belief = []

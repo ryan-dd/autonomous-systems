@@ -20,8 +20,8 @@ class RobotPlotter:
         ax.set_title("State vs estimated state")
         ax.set_xlabel("X")
         ax.set_ylabel("Y")
-        ax.set_xlim(-30,30)
-        ax.set_ylim(-30,30)
+        ax.set_xlim(-20,20)
+        ax.set_ylim(-20,20)
 
         landmarks = np.array(landmarks)
         ax.scatter(

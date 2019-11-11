@@ -1,4 +1,4 @@
-from math import cos, sin, atan2, exp
+from math import cos, sin, atan2, exp, pi
 
 import numpy as np
 from scipy.linalg import block_diag
@@ -8,11 +8,13 @@ from tools.wrap import wrap
 
 
 class EKF_SLAM:
-    def __init__(self, sample_period):
+    def __init__(self, sample_period, vision_angle=pi/8):
+        self.vision_angle = vision_angle
         self._change_t = sample_period
         
         self.Qt = np.diag((STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
         self.all_features = np.random.random((20,2))*40-20
+        # self.all_features = np.vstack(([6, -7, 6, -3, 0],[4, -8, -4, 0, 2])).T
         self.n_features = self.all_features.shape[0]
 
         robot_state_mean_belief = np.vstack((0, 0, 0))
@@ -20,11 +22,11 @@ class EKF_SLAM:
         self.mean_belief = np.append(robot_state_mean_belief, landmark_state_mean_belief, axis=0)
 
         robot_state_covariances = np.diag((0, 0, 0))
-        landmark_covariances = np.diag(([100000]*self.n_features*2))
+        landmark_covariances = np.diag(([1e10]*self.n_features*2))
         self.covariance_belief = block_diag(robot_state_covariances, landmark_covariances)
         
         self.initialized = [False]*self.n_features
-        self.R = np.diag((0.2**2, 0.2**2, 0.5**2))
+        self.R = np.diag((0.2**2, 0.2**2, 0.05**2))
 
     def prediction_step(self, vc, wc):       
         Fx = np.append(np.eye(3), np.zeros((3, self.n_features*2)), axis=1)
@@ -52,7 +54,7 @@ class EKF_SLAM:
         [ALPHA1*vc**2 + ALPHA2*wc**2, 0],
         [0, ALPHA3*vc**2 + ALPHA4*wc**2]
         ])
-        Rt = Vt @ Mt @ Vt.T
+        self.R = Vt @ Mt @ Vt.T
 
         self.covariance_belief = Gt @ self.covariance_belief @ Gt.T + Fx.T @ self.R @ Fx
 
@@ -64,6 +66,10 @@ class EKF_SLAM:
             mean_x = self.mean_belief[0]
             mean_y = self.mean_belief[1]
             mean_theta = self.mean_belief[2]
+            angle_to_check = wrap(np.arctan2((f_y-true_state[1]), (f_x-true_state[0])) - wrap(true_state[2]))
+            if abs(angle_to_check) > self.vision_angle:
+                continue
+
             measurement = simulate_measurement(true_state, f_x, f_y)
             if not self.initialized[index]:
                 r = measurement[0]
@@ -72,18 +78,18 @@ class EKF_SLAM:
                 self.mean_belief[2*index + 4] = r*sin(phi + mean_theta) + mean_y
                 self.initialized[index] = True
             # Range and bearing from mean belief
-            delta_x = f_x - mean_x
-            delta_y = f_y - mean_y
+            delta_x = self.mean_belief[2*index + 3] - mean_x
+            delta_y = self.mean_belief[2*index + 4] - mean_y
             delta = np.vstack((delta_x, delta_y))
-            q = (f_x - mean_x)**2 + (f_y - mean_y)**2
+            q = (delta_x)**2 + (delta_y)**2
             zti = np.array([
                 [np.sqrt(q)],
-                [np.arctan2((f_y - mean_y), (f_x - mean_x)) - mean_theta]]).reshape((2,1))
+                [np.arctan2((delta_y), (delta_x)) - mean_theta]]).reshape((2,1))
             left = np.append(np.eye(3), np.zeros((2, 3)), axis=0)
             middle1 = np.zeros((5, 2*(index+1)-2))
             middle2 = np.append(np.zeros((3,2)), np.eye(2), axis=0)
             right = np.zeros((5, 2*self.n_features-2*(index+1)))
-            Fxj = np.concatenate((left,middle1,middle2,right), axis=1)
+            Fxj = np.concatenate((left, middle1, middle2, right), axis=1)
             sqrtq = np.sqrt(q)
             Ht = 1/q * np.array(
                 [[-sqrtq*delta_x, -sqrtq*delta_y, np.array([0]), sqrtq*delta_x, sqrtq*delta_y],
@@ -95,7 +101,8 @@ class EKF_SLAM:
             Kt = covariance_belief @ Ht.T @ np.linalg.inv(St)
             self.mean_belief = mean_belief + Kt @ wrap((measurement - zti), index=1)
             self.covariance_belief = (np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
-        self.kt = Kt
+            self.kt = Kt
+
 
 def simulate_measurement(true_state, f_x, f_y):
     true_x = true_state[0]

@@ -32,11 +32,11 @@ x(1) = 0;
 y(1) = 0;
 th(1) = 0;
 % Landmark (feature) locations
-% mx = [6 -7 6 -3 0 ]; % x-coordinate of landmarks
-% my = [4 -8 -4 0 2 ]; % y-coordinate of landmarks
-% m = [mx; my];
-MM = 20; % number of landmarks
-m = 20*(rand(2,MM)-0.5);
+mx = [6 -7 6 -3 0 ]; % x-coordinate of landmarks
+my = [4 -8 -4 0 2 ]; % y-coordinate of landmarks
+m = [mx; my];
+MM = 5; % number of landmarks
+% m = 20*(rand(2,MM)-0.5);
 % Draw robot at time step 1
 % drawRobot(x(1),y(1),th(1),m,t(1));
 for i = 2:Nsteps
