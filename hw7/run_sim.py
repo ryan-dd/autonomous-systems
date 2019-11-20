@@ -14,7 +14,7 @@ def main():
     robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4) 
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
-    all_features = np.random.random((3,2))*40-20
+    all_features = np.random.random((20,2))*40-20
         # self.all_features = np.vstack(([6, -7, 6, -3, 0],[4, -8, -4, 0, 2])).T
     pkf = FastSLAM(SAMPLE_PERIOD, 1000, all_features)
     robot_plotter.init_plot(robot.x, robot.y, robot.theta, all_features, particles=pkf.particles)

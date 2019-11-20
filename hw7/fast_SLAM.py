@@ -60,7 +60,7 @@ class FastSLAM:
             # sample pose
             position = particle[0]
             particle[0] = robot.next_position_from_state(position[0], position[1], position[2], v_perturbed, w_perturbed, self._change_t)
-
+            particle[0] = wrap(particle[0], index=2)
             new_particle, w = self.ekf_measurement_step(measurements_from_robot, particle)
             updated_particles.append(new_particle)
             all_weights.append(w)

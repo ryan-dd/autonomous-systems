@@ -41,15 +41,12 @@ x_tr(1) = x_tr0;
 y_tr(1) = y_tr0;
 th_tr(1) = th_tr0;
 % Draw robot at time step 1
-% drawRobot(x_tr(1),y_tr(1),th_tr(1),m,t(1));
 % Calculate measurement truth data at time step 1
-
-% for j=1:MM
-%  z_tr = meas_truth([x_tr(1);y_tr(1);th_tr(1)],m(:,j),Q_t);
-%  range_tr(1,j) = z_tr(1);
-%  bearing_tr(1,j) = z_tr(2);
-% end
-
+for j=1:MM
+ z_tr = meas_truth([x_tr(1);y_tr(1);th_tr(1)],m(:,j),Q_t);
+ range_tr(1,j) = z_tr(1);
+ bearing_tr(1,j) = z_tr(2);
+end
 % Create pose truth and measurement truth data
 for i = 2:N
  x_tr(i) = x_tr(i-1) + (-v_tr(i)/om_tr(i)*sin(th_tr(i-1)) + v_tr(i)/om_tr(i)*sin(th_tr(i-1)+om_tr(i)*dt));
@@ -59,11 +56,11 @@ for i = 2:N
  % drawRobot(x_tr(i),y_tr(i),th_tr(i),m,t(i));
  % pause(0.05);
  % Calculate measurement truth data at time step i
-%  for j=1:MM
-%  z_tr = meas_truth(X_i,m(:,j),Q_t);
-%  range_tr(i,j) = z_tr(1);
-%  bearing_tr(i,j) = z_tr(2);
-%  end
+ for j=1:MM
+ z_tr = meas_truth(X_i,m(:,j),Q_t);
+ range_tr(i,j) = z_tr(1);
+ bearing_tr(i,j) = z_tr(2);
+ end
 end
 X_tr = [x_tr; y_tr; th_tr]; % matrix of true state vectors at all times
 % Particles are made up of robot pose states (x, y, heading), x and y
@@ -97,7 +94,7 @@ w_t = squeeze(w_sv(:,1));
 % Draw robot particles
 px = X_t(1,:);
 py = X_t(2,:);
-% drawRobotParticles(x_tr0,y_tr0,th_tr0,m,px,py,t(1));
+%%%%drawRobotParticles(x_tr0,y_tr0,th_tr0,m,px,py,t(1));
 % Fast SLAM algorithm : loop through the data
 for i=2:N
  z_t = [range_tr(i,:); bearing_tr(i,:)];
@@ -149,7 +146,7 @@ for i=2:N
  lm1_y lm2_y lm3_y lm4_y lm5_y lm6_y lm7_y lm8_y];
  px = X_t(1,:);
  py = X_t(2,:);
- drawRobotParticlesLM(x_tr(i),y_tr(i),th_tr(i),m,lm_data,px,py,t(i));
+ %%%%%%drawRobotParticlesLM(x_tr(i),y_tr(i),th_tr(i),m,lm_data,px,py,t(i));
  pause(0.01);
 end
 figure(2); clf;
@@ -315,7 +312,6 @@ function x_t = samp_motion_model(u_t,x_t_1,alpha,dt)
  x_t = [xpr; ypr; thpr];
 
 end
-
 function [mu_t,Sig_t,w_t] = initialize_lm(X_t,z_t,Q_t)
  % Initialize landmark location first time that it is seen
 
@@ -349,7 +345,6 @@ function [mu_t,Sig_t,w_t] = initialize_lm(X_t,z_t,Q_t)
  w_t = 1/1000;
 
 end
-
 function [mu_t,Sig_t,w_t] = meas_model(X_t,z_t,mu_t_1,Sig_t_1,Q_t)
  % Calculate estimate of landmark location for particle and particle weight
 
@@ -369,9 +364,9 @@ function [mu_t,Sig_t,w_t] = meas_model(X_t,z_t,mu_t_1,Sig_t_1,Q_t)
  % estimates of range and bearing from particle to landmark
  q = (mx-xp)^2 + (my-yp)^2;
  r_hat = sqrt(q);
- ph_hat = wrap_ang(atan2(my-yp,mx-xp) - thp);
+ ph_hat = wrapToPi(atan2(my-yp,mx-xp) - thp);
 
- residual = [r-r_hat; wrap_ang(ph-ph_hat)];
+ residual = [r-r_hat; wrapToPi(ph-ph_hat)];
 
  % Jacobian of measurement function wrt landmark location (x,y)
  H = zeros(2,2);
@@ -389,7 +384,6 @@ function [mu_t,Sig_t,w_t] = meas_model(X_t,z_t,mu_t_1,Sig_t_1,Q_t)
  w_t = (det(2*pi*Q))^(-0.5)*exp(-0.5*residual'/Q*residual);
 
 end
-
 function [X,w,ind] = LVsamp(X_bar,w_bar,M)
  % LVsamp.m
  %
@@ -440,4 +434,17 @@ function [X,w,ind] = LVsamp(X_bar,w_bar,M)
 % legend('weights','resampled');
 % plot(wtmp);
 % pause(0.1);
+end
+function z_tr = meas_truth(truth,landmark,Q_t)
+true_x = truth(1);
+true_y = truth(2);
+true_theta = truth(3);
+f_x = landmark(1);
+f_y = landmark(2);
+q = (f_x - true_x)^2 + (f_y - true_y)^2;
+
+phi = atan2((f_y - true_y), (f_x - true_x)) - true_theta;
+phi = wrapToPi(phi);
+r = sqrt(q);
+z_tr = [r + normrnd( 0, Q_t(1,1)); wrapToPi(phi+normrnd( 0, Q_t(2,2)))];
 end
