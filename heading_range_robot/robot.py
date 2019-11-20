@@ -1,5 +1,5 @@
 from math import sin, cos, pi, sqrt
-import os
+from os import path
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ class Robot():
     def __init__(self, x, y, theta, change_t, alpha1, alpha2, alpha3, alpha4, truth_file=None):
         self._use_truth_data = False
         if truth_file is not None:
-            truth_file = os.path.abspath(os.path.join(os.path.dirname(
+            truth_file = path.abspath(path.join(path.dirname(
             __file__), truth_file))
             truth = loadmat(truth_file)
             self.all_x = truth['x'][0]

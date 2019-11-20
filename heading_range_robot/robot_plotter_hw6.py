@@ -50,7 +50,6 @@ class RobotPlotter:
         self._ax.plot(self.robot_path_data[-2:,0], self.robot_path_data[-2:,1], c='b')
         self._ax.plot(self.est_path_data[-2:,0], self.est_path_data[-2:,1], c='g')
         est_landmarks = np.append(estimated_state[3:][::2], estimated_state[4:][::2], axis=1)
-        diag_to_plot = np.diagonal(covariance_belief)
         for index, est_landmark in enumerate(est_landmarks):
             i1 = 2*(index+1)+1
             i2 = 2*(index+1)+3

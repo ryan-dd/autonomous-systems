@@ -2,13 +2,15 @@ from math import cos, sin
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.patches import Ellipse
+import matplotlib.transforms as transforms
 import numpy as np
 
 class RobotPlotter:
     def __init__(self):
         pass
 
-    def init_plot(self, x, y, theta, landmarks, particles=None):
+    def init_plot(self, x, y, theta, landmarks, particles):
         plt.ion()
         fig, ax = plt.subplots()
         main_ax = ax
@@ -22,18 +24,34 @@ class RobotPlotter:
         true_hist = main_ax.plot(np.array([[x]]), np.array([[y]]))
         self.plot_robot(x, y, theta)
         if particles is not None:
-            self.particles_scatter = main_ax.scatter(particles[:,0], particles[:,1])
+            p_plot = np.array([particle[0] for particle in particles])
+            self.particles_scatter = main_ax.scatter(p_plot[:,0], p_plot[:,1])
+        
+        self.estimated_landmarks = ax.scatter([], [])
+        self.error_bounds_ellipses = []
+
         self.data = np.array([[x, y]])
         plt.draw()
 
-    def update_plot(self, x, y, theta, particles=None):
+    def update_plot(self, x, y, theta, particles, particle_to_plot):
         self.remove_for_next_step()
         self.plot_robot(x, y, theta)
         self.data = np.append(self.data, np.array([[x,y]]).reshape(1,2), axis=0)
         self._main_ax.plot(self.data[:,0], self.data[:,1])
         self._fig.canvas.draw_idle()
-        if particles is not None:
-            self.particles_scatter.set_offsets(np.array(particles)[:,:2].reshape(1000,2))
+        p_plot = np.array([particle[0] for particle in particles])
+        self.particles_scatter.set_offsets(p_plot.reshape(len(p_plot),-1)[:,:2])
+        
+        particle_position = particle_to_plot[0]
+        landmark_beliefs = particle_to_plot[1]
+        landmark_covars = particle_to_plot[2]
+        initialized = particle_to_plot[3]
+        for index, est_landmark in enumerate(landmark_beliefs):
+            if not initialized[index]:
+                continue
+            cov = landmark_covars[index]
+            self.error_bounds_ellipses.append(confidence_ellipse(est_landmark[0], est_landmark[1], cov, self._main_ax))
+        self.estimated_landmarks.set_offsets(landmark_beliefs)
         plt.pause(0.0001)
 
     def plot_robot(self, x, y, theta):
@@ -46,6 +64,9 @@ class RobotPlotter:
     def remove_for_next_step(self):
         self.circle.remove()
         # self.arrow.remove()
+        for shape in self.error_bounds_ellipses:
+            shape.remove()
+        self.error_bounds_ellipses = []
 
 def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_period, all_kt=None):
     time_steps = list(range(len(all_true_states)))
@@ -64,12 +85,8 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
     mean_beliefs_about_theta = all_mean_belief[:, 2, 0]
     
     var_beliefs_about_x = all_variance_belief[:, 0, 0]
-    if all_kt is None:        
-        var_beliefs_about_y = all_variance_belief[:, 1, 0]
-        var_beliefs_about_theta = all_variance_belief[:, 2, 0]
-    else:
-        var_beliefs_about_y = all_variance_belief[:, 1, 1]
-        var_beliefs_about_theta = all_variance_belief[:, 2, 2]
+    var_beliefs_about_y = all_variance_belief[:, 1, 0]
+    var_beliefs_about_theta = all_variance_belief[:, 2, 0]
 
     # Add static plots
     _, axes = plt.subplots(3, 2, figsize=(15, 15))
@@ -97,7 +114,7 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
     ax2.plot(time_steps_in_seconds, x_error)
     ax2.plot(time_steps_in_seconds, np.sqrt(var_beliefs_about_x)*2, 'b--')
     ax2.plot(time_steps_in_seconds, np.negative(
-        np.sqrt(var_beliefs_about_x)*2), 'b--')
+        np.sqrt(np.abs(var_beliefs_about_x))*2), 'b--')
     ax2.legend(["X Error", "X Variance"])
     ax2.set_title("Error from X and mean belief")
     ax2.set_xlabel("Time (s)")
@@ -108,9 +125,9 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
         (vt-mean_beliefs_about_y[i])for i, vt in enumerate(true_y)]
     ax3.plot(time_steps_in_seconds, y_error)
     ax3.plot(time_steps_in_seconds, 
-        np.sqrt(var_beliefs_about_y)*2, 'y--')
+        np.sqrt(np.abs(var_beliefs_about_y))*2, 'y--')
     ax3.plot(time_steps_in_seconds, 
-        np.negative(np.sqrt(var_beliefs_about_y)*2), 'y--')
+        np.negative(np.sqrt(np.abs(var_beliefs_about_y))*2), 'y--')
     ax3.legend(["Y Error", "Y Variance"])
     ax3.set_title("Error from Y and mean belief")
     ax3.set_xlabel("Time (s)")
@@ -121,9 +138,9 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
         (vt-mean_beliefs_about_theta[i])for i, vt in enumerate(true_theta)]
     ax4.plot(time_steps_in_seconds, theta_error)
     ax4.plot(time_steps_in_seconds, 
-        np.sqrt(var_beliefs_about_theta)*2, 'y--')
+        np.sqrt(np.abs(var_beliefs_about_theta))*2, 'y--')
     ax4.plot(time_steps_in_seconds, 
-        np.negative(np.sqrt(var_beliefs_about_theta)*2), 'y--')
+        np.negative(np.sqrt(np.abs(var_beliefs_about_theta))*2), 'y--')
     ax4.legend(["Theta Error", "Theta Variance"])
     ax4.set_title("Error from theta and mean belief")
     ax4.set_xlabel("Time (s)")
@@ -141,5 +158,31 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, sample_p
         ax5.legend(["X kalman gain range", "Y kalman gain range", "Theta Kalman Gain range",
                 "X kalman gain bearing", "Y kalman gain bearing", "Theta Kalman Gain bearing"])
 
+    sc = plt.imshow(all_variance_belief[-1], cmap='Blues', interpolation='nearest', origin='lower')
+    plt.colorbar(sc)
     plt.show()
     plt.pause(200)
+
+# https://matplotlib.org/devdocs/gallery/statistics/confidence_ellipse.html
+def confidence_ellipse(mean_x, mean_y, cov, ax, n_std=2.0, facecolor='r', **kwargs):
+    pearson = cov[0, 1]/np.sqrt(cov[0, 0] * cov[1, 1])
+    # Using a special case to obtain the eigenvalues of this
+    # two-dimensional dataset.
+    ell_radius_x = np.sqrt(1 + pearson)
+    ell_radius_y = np.sqrt(1 - pearson)
+    ellipse = Ellipse((0, 0),
+        width=ell_radius_x * 2,
+        height=ell_radius_y * 2,
+        facecolor=facecolor,
+        alpha=0.5,
+        **kwargs)
+
+    scale_x = np.sqrt(cov[0, 0]) * n_std
+    scale_y = np.sqrt(cov[1, 1]) * n_std
+    transf = transforms.Affine2D() \
+        .rotate_deg(45) \
+        .scale(scale_x, scale_y) \
+        .translate(mean_x, mean_y)
+
+    ellipse.set_transform(transf + ax.transData)
+    return ax.add_patch(ellipse)
