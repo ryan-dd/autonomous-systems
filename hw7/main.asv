@@ -80,7 +80,7 @@ Sig_lm_sv = zeros(2,2,MM,K,N);
 w_sv = ones(K,N)/K;
 % initialize all particles to be in the initial pose at the first time step
 for k=1:K
- X_sv(:,k,1) = [rand()*40-20; rand()*40-20; rand()*pi];
+ X_sv(:,k,1) = [rand()*40-20; y_tr0; th_tr0];
  for mm=1:MM
  Mu_lm_sv(:,mm,k,1) = [0; 0];
  Sig_lm_sv(:,:,mm,k,1) = 100*eye(2);
@@ -229,7 +229,6 @@ function [X_t,Mu_lm_t,Sig_lm_t,k_max] = Fast_SLAM_alg_mult_lm(z_t,u_t,X_t_1,Mu_l
  for k = 1:K
  X_t(:,k) = samp_motion_model(u_t,X_t_1(:,k),alpha,dt);
 
- 
  for l=1:M
  Mu_t_1 = squeeze(Mu_lm_t_1(:,l,k));
  Sig_t_1 = squeeze(Sig_lm_t_1(:,:,l,k));

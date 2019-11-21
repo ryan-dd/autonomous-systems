@@ -1,8 +1,8 @@
 from math import cos, pi, sqrt
 
-INITIAL_X = -5 # meters
-INITIAL_Y = -3 # meters
-INITIAL_THETA = pi/2 # degrees
+INITIAL_X = 0 # meters
+INITIAL_Y = 5 # meters
+INITIAL_THETA = 0 # degrees
 
 LANDMARK_1_LOCATION = [6, 4]
 LANDMARK_2_LOCATION = [-7, 8]
@@ -11,7 +11,7 @@ LANDMARKS = [LANDMARK_1_LOCATION, LANDMARK_2_LOCATION, LANDMARK_3_LOCATION]
 STD_DEV_LOCATION_RANGE = 0.1
 STD_DEV_LOCATION_BEARING = 0.05
 SAMPLE_PERIOD = 0.1 # seconds
-TOTAL_TIME = 50 # seconds
+TOTAL_TIME = 40 # seconds
 
 ALPHA1 = 0.1
 ALPHA2 = 0.01

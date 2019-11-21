@@ -14,7 +14,7 @@ from tools.wrap import wrap
 class FastSLAM:
     def __init__(self, sample_period, number_of_particles, landmarks, vision_angle=2*pi):
         self._change_t = sample_period
-        self.Qt = np.eye(2) * np.vstack(
+        self.Qt = np.diag(
             (STD_DEV_LOCATION_RANGE**2, STD_DEV_LOCATION_BEARING**2))
         self.all_features = landmarks
         self.n_features = len(landmarks)
@@ -22,6 +22,7 @@ class FastSLAM:
         self.particles = self.create_random_particles(number_of_particles)
         self.vision_angle = vision_angle
         self.R = np.diag((0.2**2, 0.2**2, 0.05**2))
+
 
     def create_random_particles(self, n, initial_cov=1000000):
         all_particles = []
@@ -32,6 +33,9 @@ class FastSLAM:
             particle_x = rand()*40-20
             particle_y = rand()*40-20
             particle_theta = rand()*2*pi
+            particle_x =0
+            particle_y = 5
+            particle_theta = 0
             particle_position = np.array([particle_x, particle_y, particle_theta])[:, np.newaxis]
             all_particles.append([particle_position, np.copy(landmark_state_mean_belief), np.copy(landmark_covariances), deepcopy(initialized)])
         return all_particles
@@ -55,8 +59,8 @@ class FastSLAM:
         for particle in self.particles:
             v_perturbed = vc 
             w_perturbed = wc
-            # v_perturbed = vc + robot.translational_noise(vc, wc)
-            # w_perturbed = wc + robot.rotational_noise(vc, wc)
+            v_perturbed = vc + robot.translational_noise(vc, wc)
+            w_perturbed = wc + robot.rotational_noise(vc, wc)
             # sample pose
             position = particle[0]
             particle[0] = robot.next_position_from_state(position[0], position[1], position[2], v_perturbed, w_perturbed, self._change_t)
@@ -82,6 +86,7 @@ class FastSLAM:
         mean_beliefs = particle[1]
         covar_beliefs = particle[2]
         initialized = particle[3]
+        w=1/1000
         for measurement_set in measurements_from_robot:
             index = measurement_set[0]
             measurement = measurement_set[1]
@@ -116,17 +121,17 @@ class FastSLAM:
             q = (delta_x)**2 + (delta_y)**2
             zti = np.array([
                 [np.sqrt(q)],
-                [np.arctan2((delta_y), (delta_x)) - theta]]).reshape((2,1))
+                [wrap(np.arctan2((delta_y), (delta_x)) - theta)]]).reshape((2,1))
             Ht = np.array([
-                [-(f_x - x)/np.sqrt(q), -(f_y - y)/np.sqrt(q)],
-                [(f_y - y)/q, -(f_x - x)/q]]).reshape((2,2))
+                [(f_x - x)/np.sqrt(q), (f_y - y)/np.sqrt(q)],
+                [-(f_y - y)/q, (f_x - x)/q]]).reshape((2,2))
             residual = wrap((measurement - zti), index=1)
 
             covariance_belief = covar_beliefs[index]
             Q = Ht @ covariance_belief @ Ht.T + Qt
             Kt = covariance_belief @ Ht.T @ np.linalg.inv(Q)
-            mean_belief = mean_belief + Kt @ residual
-            covariance_belief = (np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
+            mean_beliefs[index] = (mean_belief[:,np.newaxis] + Kt @ residual).reshape(2,)
+            covar_beliefs[index] = (np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
             w = np.linalg.det(2*pi*Q)**(-1/2) * exp(-1/2*residual.T @ inv(Q) @ residual)
         return [position, mean_beliefs, covar_beliefs, initialized], w
 
