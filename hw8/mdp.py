@@ -64,7 +64,6 @@ converged = False
 index = 0
 
 while not converged:
-    print(index)
     V_prev = np.copy(V)
     # Value interation
     VN = np.roll(V, 1, axis=0)
@@ -85,7 +84,7 @@ while not converged:
     V[1:Np-1, Np-1] = np.copy(V[1:Np-1, Np-2])
     V[0, 0:Np-1] = np.copy(V[1, 0:Np-1])
     V[Np-1, 0:Np-1] = np.copy(V[Np-2, 0:Np-1])
-    
+
     V[0, 0] = 0
     V[Np-1, Np-1] = 0
     V[0, Np-1] = 0
@@ -95,17 +94,43 @@ while not converged:
     index += 1
     if np.all(np.isclose(V, V_prev)):
         converged = True
+print(index)
 cb.remove()
 ax.imshow(V.T, origin="lower")
 cb = fig.colorbar(im)
 fig.canvas.draw_idle()
-action_vectors = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])  # N, E, S, W
+action_vectors = np.array([[-1, 0], [0, 1], [1, 0], [0, -1]])  # W, N, E, S
 
 X = np.repeat(list(range(Np)), Np)
 Y = np.tile(list(range(Np)), Np)
-direction = np.argmax(all_rewards, axis=2)
-U = action_vectors[:, 0][direction]
-V = action_vectors[:, 1][direction]
+directions = np.argmax(all_rewards, axis=2)
+U = action_vectors[:, 0][directions]
+V = action_vectors[:, 1][directions]
 q = ax.quiver(X, Y, U, V, units='xy', scale=1,
               color='red', label="Quiver Plot")
-plt.pause(200)
+fig.canvas.draw_idle()
+plt.pause(0.002)
+
+initial_state = [27, 19]
+x = 27
+y = 19
+
+iteration = 0
+all_x = [x]
+all_y = [y]
+while iteration < 500:
+    direction = directions[x, y]
+    if direction == 0:
+        x=x-1
+    elif direction==1:
+        y=y+1
+    elif direction==2:
+        x=x+1
+    else:
+        y=y-1
+    all_x.append(x)
+    all_y.append(y)
+    iteration += 1
+plt.plot(all_x,all_y)
+fig.canvas.draw_idle()
+plt.waitforbuttonpress()
