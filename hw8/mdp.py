@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # Create map
 N = 100
 Np = 100 + 2
-gamma = 0.995
+gamma = 0.99
 
 
 full_map = np.ones((Np, Np))*-2
@@ -28,6 +28,8 @@ walls[1:N+1, N] = 1
 
 # Create single obstacle
 obs1[19:40, 29:80] = 1
+obs1[9:20, 59:65] = 1
+obs1[30:50, 29:80] = 1
 obs1[9:20, 59:65] = 1
 
 # Another obstacle
@@ -94,7 +96,7 @@ while not converged:
     index += 1
     if np.all(np.isclose(V, V_prev)):
         converged = True
-print(index)
+print("Iterations until convergence: {}".format(index))
 cb.remove()
 ax.imshow(V.T, origin="lower")
 cb = fig.colorbar(im)
