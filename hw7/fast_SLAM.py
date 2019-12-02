@@ -33,7 +33,7 @@ class FastSLAM:
             particle_x = rand()*40-20
             particle_y = rand()*40-20
             particle_theta = rand()*2*pi
-            particle_x =0
+            particle_x = 0
             particle_y = 5
             particle_theta = 0
             particle_position = np.array([particle_x, particle_y, particle_theta])[:, np.newaxis]
@@ -133,6 +133,9 @@ class FastSLAM:
             mean_beliefs[index] = (mean_belief[:,np.newaxis] + Kt @ residual).reshape(2,)
             covar_beliefs[index] = (np.eye(len(Kt)) - Kt @ Ht) @ covariance_belief
             w = np.linalg.det(2*pi*Q)**(-1/2) * exp(-1/2*residual.T @ inv(Q) @ residual)
+            # Update position
+            
+
         return [position, mean_beliefs, covar_beliefs, initialized], w
 
     def is_not_valid_measurement(self, f_x, f_y, true_state):

@@ -14,7 +14,7 @@ def main():
     robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4) 
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
-    all_features = np.random.random((20,2))*40-20
+    all_features = np.random.random((2,2))*40-20
     # mx = np.array([6, -7, 6, 0, -8, 1, 4, -5])[:,np.newaxis]
     # my = np.array([4, 8, -1, -9, -5, 1, -4, 3])[:,np.newaxis]
     # all_features = np.append(mx,my,axis=1)
