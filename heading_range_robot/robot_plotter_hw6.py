@@ -51,9 +51,12 @@ class RobotPlotter:
         self._ax.plot(self.est_path_data[-2:,0], self.est_path_data[-2:,1], c='g')
         est_landmarks = np.append(estimated_state[3:][::2], estimated_state[4:][::2], axis=1)
         for index, est_landmark in enumerate(est_landmarks):
+            
             i1 = 2*(index+1)+1
             i2 = 2*(index+1)+3
             cov = covariance_belief[i1:i2,i1:i2]
+            if cov[0][0] > 1000:
+                continue
             #cov = np.diag((diag_to_plot[2*(index+1)+1], diag_to_plot[2*(index+1)+2]))
             self.error_bounds_ellipses.append(confidence_ellipse(est_landmark[0], est_landmark[1], cov, self._ax))
         self.estimated_landmarks.set_offsets(est_landmarks)
