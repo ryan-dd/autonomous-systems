@@ -2,7 +2,7 @@ import numpy as np
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-T = 1
+T = 2
 gamma = 1
 
 control_action_rewards = np.array(
@@ -20,21 +20,31 @@ px1_u_x2 = np.array(
 )
 
 # Line set for each control action
-line_set = {0:[],1:[],2:[]}
-for tau in range(T):
-    new_line_set = {0:[],1:[],2:[]}
+
+# Initial line set
+line_set = [[[-100, 100]],[[-50, 100]],[[-1, -1]]]
+for tau in range(T-1):
+    new_line_set = [[],[],[]]
+    v_ukzj = [[],[],[]]
     # Cycle through each line
-    for u_index, lines in line_set.items():
-        for line in lines:
-            # Cycle through each control action
-            for u in range(3):
-                # Cycle through each measurement
-                for z in range(2):
-                    # Cycle through each starting state
-                    for j in range(2):
-                        vkuzj = 0
-                        for i in range(2):
-                            vik = line[i]
-                            pz_xi = measurement_probabilities[i][z]
-                            pxi_u_xj = px1_u_x2[u][i][j]
-                            vkujz += vik*pz_xi*pxi_u_xj
+    for u, lines in enumerate(line_set):
+        n_lines_next = len(lines)
+        # For each original line there are 4 lines created
+        v_ukzj[u] = np.zeros((n_lines_next, 2, 2))
+        for k, line in enumerate(lines):
+            # Cycle through each measurement
+            for z in range(2):
+                # Cycle through each starting and ending state
+                for j in range(2):
+                    for i in range(2):
+                        vik = line[i]
+                        pz_xi = measurement_probabilities[i][z]
+                        pxi_u_xj = px1_u_x2[u][i][j]
+                        v_ukzj[u][k][z][j] += vik*pz_xi*pxi_u_xj
+for u in range(3):
+    for lines in v_ukzj[u]:
+        for k, line in enumerate(lines):
+            v = [0,0]
+            for i in range(2):
+                v[i] += gamma*(control_action_rewards[u][i] + v_ukzj[u][k][0][i] + v_ukzj[u][k][1][i])
+            new_line_set[u].append(v)
