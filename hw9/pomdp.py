@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-T = 7
+T = 3
 gamma = 1
 
 control_action_rewards = np.array(
@@ -41,13 +41,14 @@ for tau in range(T-1):
                         pz_xi = measurement_probabilities[i][z]
                         pxi_u_xj = px1_u_x2[u][i][j]
                         v_kuzj[k][u][z][j] += vik*pz_xi*pxi_u_xj
-    for k, line in enumerate(line_set):
-        for u in range(3):
-            v = [0,0]
-            for i in range(2):
-                v[i] = gamma*(control_action_rewards[u][i] + v_kuzj[k][u][0][i] + v_kuzj[k][u][1][i])
-            policy[u].append(v)
-            all_new_lines.append(v)
+    for u in range(3):
+        for k1, line1 in enumerate(line_set):
+            for k2, line2 in enumerate(line_set):
+                v = [0,0]
+                for i in range(2):
+                    v[i] = gamma*(control_action_rewards[u][i] + v_kuzj[k1][u][0][i] + v_kuzj[k1][u][1][i] + v_kuzj[k2][u][0][i] + v_kuzj[k2][u][1][i])
+                policy[u].append(v)
+                all_new_lines.append(v)
     if tau == T-2:
         for line in all_new_lines:
             plt.plot([0,1], line)
