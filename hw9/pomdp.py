@@ -1,8 +1,9 @@
 import numpy as np
+import matplotlib.pyplot as plt
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-T = 2
+T = 3
 gamma = 1
 
 control_action_rewards = np.array(
@@ -24,12 +25,13 @@ px1_u_x2 = np.array(
 # Initial line set
 line_set = [[[-100, 100]],[[-50, 100]],[[-1, -1]]]
 for tau in range(T-1):
+    to_plot = []
     new_line_set = [[],[],[]]
     v_ukzj = [[],[],[]]
     # Cycle through each line
     for u_associated, lines in enumerate(line_set):
         n_lines_next = len(lines)
-        # For each original line there are 4 lines created
+        # For each original line there are k*z = 4 lines created
         v_ukzj[u_associated] = np.zeros((n_lines_next, 3, 2, 2))
         for k, line in enumerate(lines):
             # Cycle through each control action
@@ -50,4 +52,9 @@ for tau in range(T-1):
                 for i in range(2):
                     v[i] = gamma*(control_action_rewards[u][i] + v_ukzj[u_associated][k][u][0][i] + v_ukzj[u_associated][k][u][1][i])
                 new_line_set[u].append(v)
-hi = 0
+                to_plot.append(v)
+    if tau == T-2:
+        for line in to_plot:
+            plt.plot([0,1], line)
+    line_set = np.copy(new_line_set)
+plt.show()
