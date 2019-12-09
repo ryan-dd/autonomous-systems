@@ -23,8 +23,8 @@ px1_u_x2 = np.array(
 # Line set for each control action
 
 # Initial line set
-line_set = [[-100, 100],[-50, 100],[-1, -1]]
-for tau in range(T-1):
+line_set = [[0,0]]
+for tau in range(T):
     all_new_lines = []
     policy = [[],[],[]]
     v_kuzj = np.zeros((len(line_set),3,2,2))
@@ -46,11 +46,13 @@ for tau in range(T-1):
             for k2, line2 in enumerate(line_set):
                 v = [0,0]
                 for i in range(2):
-                    v[i] = gamma*(control_action_rewards[u][i] + v_kuzj[k1][u][0][i] + v_kuzj[k1][u][1][i] + v_kuzj[k2][u][0][i] + v_kuzj[k2][u][1][i])
+                    v[i] = gamma*(control_action_rewards[u][i] + v_kuzj[k1][u][0][i] + v_kuzj[k2][u][1][i])
                 policy[u].append(v)
                 all_new_lines.append(v)
-    if tau == T-2:
+    line_set = np.copy(all_new_lines)
+    if tau == T-1:
         for line in all_new_lines:
             plt.plot([0,1], line)
     line_set = np.copy(all_new_lines)
 plt.show()
+
