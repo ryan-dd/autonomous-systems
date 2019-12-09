@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-T = 3
+T = 20
 gamma = 1
 
 control_action_rewards = np.array(
@@ -25,6 +25,7 @@ px1_u_x2 = np.array(
 # Initial line set
 line_set = [[0,0]]
 for tau in range(T):
+    print(tau)
     all_new_lines = []
     policy = [[],[],[]]
     v_kuzj = np.zeros((len(line_set),3,2,2))
@@ -50,9 +51,6 @@ for tau in range(T):
                 policy[u].append(v)
                 all_new_lines.append(v)
     line_set = np.copy(all_new_lines)
-    if tau == T-1:
-        for line in all_new_lines:
-            plt.plot([0,1], line)
     # Prune the lines
     # Check for duplicates
     line_dict = {}
@@ -62,6 +60,42 @@ for tau in range(T):
         if key not in line_dict:
             line_dict[key] = line
             next_lines.append(line)
-    line_set = np.copy(next_lines)
+    if tau==0:
+        pruned_lines = next_lines
+    else:
+        # Keep any line that is not strictly dominated
+        to_examine = next_lines[1]
+        pruned_lines = np.array([to_examine])
+        start_x = 0
+        finished = False
+        lines_to_iterate = np.delete(next_lines, 1, axis=0)
+        while not finished:
+            # Check minimum intersecting lines
+            m_0 = to_examine[1]-to_examine[0]
+            b_0 = to_examine[0]
+            all_x = []
+            lines_to_examine = []
+            for line in lines_to_iterate:
+                m = line[1] - line[0]
+                b = line[0]
+                if (m_0 - m) == 0:
+                    continue
+                x = (b-b_0)/(m_0-m)
+                if x < start_x or x > 1:
+                    continue
+                lines_to_examine.append(line)
+                all_x.append(x)
+            if len(lines_to_examine) == 0:
+                break
+
+            mins = np.argmin(all_x)
+            candidates = lines_to_examine[mins].reshape(-1,2)
+            pruned_lines = np.concatenate((pruned_lines, candidates), axis=0)
+            lines_to_iterate = np.delete(lines_to_iterate, mins, axis=0)
+            to_examine = np.copy(candidates)[0]
+            start_x = min(all_x)   
+    line_set = np.copy(pruned_lines)
+for line in line_set:
+    plt.plot([0,1], line)
 plt.show()
 
