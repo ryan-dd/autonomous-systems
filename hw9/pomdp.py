@@ -53,6 +53,15 @@ for tau in range(T):
     if tau == T-1:
         for line in all_new_lines:
             plt.plot([0,1], line)
-    line_set = np.copy(all_new_lines)
+    # Prune the lines
+    # Check for duplicates
+    line_dict = {}
+    next_lines = []
+    for line in line_set:
+        key = (line[0], line[1])
+        if key not in line_dict:
+            line_dict[key] = line
+            next_lines.append(line)
+    line_set = np.copy(next_lines)
 plt.show()
 
