@@ -66,11 +66,8 @@ for tau in range(T):
                     break
             if skip_line:
                 continue
-            next_lines.append(line_first)
-
-
-        
-        # Keep any line that is not strictly dominated
+            next_lines.append(line_first) 
+        # Keep dominant lines
         to_examine = next_lines[np.argmax(np.array(next_lines)[:,0])]
         pruned_lines = np.array([to_examine])
         start_x = 0
