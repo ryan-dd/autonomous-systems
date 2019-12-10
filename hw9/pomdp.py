@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-T = 20
-gamma = 1
+T = 4
+gamma = 1.0
 
 control_action_rewards = np.array(
    [[-100,100,-1],
@@ -27,7 +27,7 @@ line_set = [[0,0]]
 for tau in range(T):
     print(tau)
     all_new_lines = []
-    policy = [[],[],[]]
+    policy = {}
     v_kuzj = np.zeros((len(line_set),3,2,2))
     # Cycle through each line
     for k, line in enumerate(line_set):
@@ -48,23 +48,27 @@ for tau in range(T):
                 v = [0,0]
                 for i in range(2):
                     v[i] = gamma*(control_action_rewards[u][i] + v_kuzj[k1][u][0][i] + v_kuzj[k2][u][1][i])
-                policy[u].append(v)
+                policy[(v[0], v[1])] = u
                 all_new_lines.append(v)
     line_set = np.copy(all_new_lines)
-    # Prune the lines
-    # Check for duplicates
-    line_dict = {}
-    next_lines = []
-    for line in line_set:
-        key = (line[0], line[1])
-        if key not in line_dict:
-            line_dict[key] = line
-            next_lines.append(line)
     if tau==0:
-        pruned_lines = next_lines
+        pruned_lines = line_set
     else:
+        # Prune the lines
+        # Check for duplicates
+        line_dict = {}
+        next_lines = []
+        for line_first in line_set:
+            skip_line = False
+            for check_line in next_lines:
+                if np.allclose(line_first, check_line):
+                    skip_line = True
+                    break
+            if skip_line:
+                continue
+            next_lines.append(line_first)
         # Keep any line that is not strictly dominated
-        to_examine = next_lines[1]
+        to_examine = next_lines[np.argmax(np.array(next_lines)[:,0])]
         pruned_lines = np.array([to_examine])
         start_x = 0
         finished = False
@@ -99,3 +103,55 @@ for line in line_set:
     plt.plot([0,1], line)
 plt.show()
 
+
+
+def take_measurement(actual_state):
+    prob = np.random.random()
+    if prob > 0.7:
+        return int(not actual_state)
+    else:
+        return actual_state
+
+def update_belief_after_measurement(p1, measured):
+    if measured == 1:
+        return 0.4*p1 + 0.3
+    else:
+        return -0.4*p1 + 0.7
+
+def update_belief_after_state_change(p1, destination_state):
+    if destination_state == 1:
+        return 0.6*p1 + 0.2
+    else:
+        return -0.6*p1 + 0.8
+
+def take_step_u3(actual_state):
+    prob = np.random.random()
+    if prob > 0.8:
+        return actual_state
+    else:
+        return int(not actual_state)
+
+
+steps = 20
+p1 = 0.6
+actual_state = 0
+reward = 0
+m = line_set[:,1] - line_set[:,0]
+b = line_set[:,0]
+for i in range(steps):
+    measurement = take_measurement(actual_state)
+    p1 = update_belief_after_measurement(p1, measurement)
+    policy_line = line_set[np.argmax(m*p1 + b)]
+    action_to_take = policy[(policy_line[0], policy_line[1])]
+    reward += control_action_rewards[action_to_take][actual_state]
+    if action_to_take == 0 or action_to_take == 1:
+        break
+    else:
+        p0 = p1
+        prev_state = actual_state
+        actual_state = take_step_u3(actual_state)
+        p1 = update_belief_after_state_change(p1, prev_state)
+        print("Step: {}, p1: {}, x1: {}, x2: {}, z: {}, p2: {}".format(i, p0, prev_state, actual_state, measurement, p1))
+print("Step: {}, Final Reward: {}".format(i, reward))
+
+plt.show()
