@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-T = 4
+T = 20
 gamma = 1.0
 
 control_action_rewards = np.array(
@@ -67,40 +67,45 @@ for tau in range(T):
             if skip_line:
                 continue
             next_lines.append(line_first)
+
+
+        
         # Keep any line that is not strictly dominated
         to_examine = next_lines[np.argmax(np.array(next_lines)[:,0])]
         pruned_lines = np.array([to_examine])
         start_x = 0
         finished = False
-        lines_to_iterate = np.delete(next_lines, 1, axis=0)
+        remaining_linear_constraints = np.delete(next_lines, 1, axis=0)
         while not finished:
             # Check minimum intersecting lines
-            m_0 = to_examine[1]-to_examine[0]
-            b_0 = to_examine[0]
-            all_x = []
-            lines_to_examine = []
-            for line in lines_to_iterate:
-                m = line[1] - line[0]
-                b = line[0]
-                if (m_0 - m) == 0:
-                    continue
-                x = (b-b_0)/(m_0-m)
-                if x < start_x or x > 1:
-                    continue
-                lines_to_examine.append(line)
-                all_x.append(x)
-            if len(lines_to_examine) == 0:
+            m1 = np.repeat(to_examine[1]-to_examine[0], len(remaining_linear_constraints))
+            b1 = np.repeat(to_examine[0], len(remaining_linear_constraints))
+            m2 = remaining_linear_constraints[:,1] - remaining_linear_constraints[:,0]
+            b2 = remaining_linear_constraints[:,0]
+            delete_indices = np.where(np.isclose(m2-m1, 0))
+            m1 = np.delete(m1, delete_indices, axis=0)
+            b1 = np.delete(b1, delete_indices, axis=0)
+            m2 = np.delete(m2, delete_indices, axis=0)
+            b2 = np.delete(b2, delete_indices, axis=0)
+            remaining_linear_constraints = np.delete(remaining_linear_constraints, delete_indices, axis=0)
+            if len(remaining_linear_constraints) == 0:
+                break
+            x = (b1-b2)/(m2-m1)
+            delete_indices_2 = np.where(x < start_x)
+            x = np.delete(x, delete_indices_2)
+            remaining_linear_constraints = np.delete(remaining_linear_constraints, delete_indices_2, axis=0)
+            if len(remaining_linear_constraints) == 0:
                 break
 
-            mins = np.argmin(all_x)
-            candidates = lines_to_examine[mins].reshape(-1,2)
+            mins = np.argmin(x)
+            candidates = remaining_linear_constraints[mins].reshape(-1,2)
             pruned_lines = np.concatenate((pruned_lines, candidates), axis=0)
-            lines_to_iterate = np.delete(lines_to_iterate, mins, axis=0)
+            remaining_linear_constraints = np.delete(remaining_linear_constraints, mins, axis=0)
             to_examine = np.copy(candidates)[0]
-            start_x = min(all_x)   
+            start_x = x[mins] 
     line_set = np.copy(pruned_lines)
-for line in line_set:
-    plt.plot([0,1], line)
+for constraint in line_set:
+    plt.plot([0,1], constraint)
 plt.show()
 
 
