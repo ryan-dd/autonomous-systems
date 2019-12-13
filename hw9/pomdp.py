@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 # State 0 is facing towards the lava, State 1 is facing away from the lava.
 # Control actions are moving forward, moving backward (which are absorbing states) and turning around
 
-
-
 control_action_rewards = np.array(
    [[-100,100,-1],
     [100,-50,-1]]).T
@@ -38,8 +36,8 @@ def calculate_policy(T, gamma):
                     for j in range(2):
                         for i in range(2):
                             vik = line[i]
-                            pz_xi = measurement_probabilities[i][z]
-                            pxi_u_xj = px1_u_x2[u][i][j]
+                            pz_xi = measurement_probabilities[z][i]
+                            pxi_u_xj = px1_u_x2[u][j][i]
                             v_kuzj[k][u][z][j] += vik*pz_xi*pxi_u_xj
         for u in range(3):
             for k1, line1 in enumerate(line_set):
@@ -47,12 +45,17 @@ def calculate_policy(T, gamma):
                     v = [0,0]
                     for i in range(2):
                         v[i] = gamma*(control_action_rewards[u][i] + v_kuzj[k1][u][0][i] + v_kuzj[k2][u][1][i])
-                    policy[(v[0], v[1])] = u
+                    if abs(v[0]) == 100*gamma:
+                        policy[(v[0], v[1])] = u
+                    else:
+                        policy[(v[1], v[0])] = u
                     all_new_lines.append(v)
         line_set = np.copy(all_new_lines)
         if tau==0:
             pruned_lines = line_set
         else:
+            not_initial = np.argwhere(abs(line_set[:,0]) != gamma*100)
+            line_set[not_initial] = np.flip(np.squeeze(line_set[not_initial]), axis=1)[:,None,:]
             # Prune the lines
             # Check for duplicates
             line_dict = {}
@@ -102,6 +105,7 @@ def calculate_policy(T, gamma):
         line_set = np.copy(pruned_lines)
     for constraint in line_set:
         plt.plot([0,1], constraint)
+    print(line_set)
     return policy, line_set
 
 
@@ -130,9 +134,6 @@ def take_step_u3(actual_state):
         return int(not actual_state)
 
 def simulate(steps, p1, actual_state, line_set, policy):
-    steps = 20
-    p1 = 0.6
-    actual_state = 1
     reward = 0
     m = line_set[:,1] - line_set[:,0]
     b = line_set[:,0]
@@ -153,7 +154,7 @@ def simulate(steps, p1, actual_state, line_set, policy):
     print("Step: {}, measurement: {}, Final p1: {} Final Reward: {}".format(i, measurement, p1, reward))
 
 if __name__ == "__main__":
-    T=10
+    T=20
     gamma=1.0
     policy, line_set = calculate_policy(T, gamma)
     plt.show()
