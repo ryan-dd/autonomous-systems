@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from heading_range_robot.parameters import *
 from hw4.particle_filter import ParticleFilter
 from heading_range_robot.robot import Robot
-from heading_range_robot.robot_plotter import RobotPlotter, plot_summary
+from heading_range_robot_hw6.robot_plotter import RobotPlotter, plot_summary
 
 
 def main():

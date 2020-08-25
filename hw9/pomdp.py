@@ -155,7 +155,8 @@ def simulate(steps, p1, actual_state, line_set, policy):
 
 if __name__ == "__main__":
     T=20
-    gamma=1.0
+    gamma = 1.0
     policy, line_set = calculate_policy(T, gamma)
     plt.show()
-    simulate(T, 0.6, 1, line_set, policy)
+    for i in range(10):
+        simulate(T, 0.6, 1.0, line_set, policy)
