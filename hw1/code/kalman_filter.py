@@ -11,7 +11,6 @@ def main():
     # Define state space
     m = VEHICLE_MASS
     b = LINEAR_DRAG_COEFFICIENT
-
     A = np.array([[0, 1], [0, -b/m]])
     B = np.array([[0], [1/m]])
     C = np.array([[1, 0]])
@@ -113,7 +112,7 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
     var_beliefs_about_velocity = all_variance_belief[:, 1, 1]
 
     # Add static plots
-    _, axes = plt.subplots(2, 2, figsize=(15, 15))
+    fig, axes = plt.subplots(2, 2, figsize=(15, 7))
     ax1 = axes[0, 0]
     ax2 = axes[1, 0]
     ax3 = axes[1, 1]
@@ -138,6 +137,7 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
     ax2.set_title("Error from position and mean belief")
     ax2.set_xlabel("Time (s)")
     ax2.set_ylabel("Position (m)")
+    ax2.set_ylim(-0.03, 0.03)
 
     velocity_error = [
         (vt-mean_beliefs_about_velocity[i])for i, vt in enumerate(all_vt)]
@@ -154,9 +154,9 @@ def plot_everything(all_xt, all_vt, all_mean_belief, all_variance_belief, all_kt
     ax4.plot(time_steps_in_seconds[1:], np.array(all_kt)[:, 0])
     ax4.plot(time_steps_in_seconds[1:], np.array(all_kt)[:, 1])
     ax4.set_title("Kalman filter gain for position")
-    ax4.legend("Position kalman gain", "Velocity kalman gain")
+    ax4.legend(["Position kalman gain", "Velocity kalman gain"])
     ax4.set_xlabel("Time (s)")
-
+    plt.tight_layout(w_pad=2.0)
     plt.show()
 
 
