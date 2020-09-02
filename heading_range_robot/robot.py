@@ -2,7 +2,6 @@ from math import sin, cos, pi, sqrt
 from os import path
 
 import numpy as np
-import pandas as pd
 from scipy.io import loadmat
 from numpy.random import normal
 
