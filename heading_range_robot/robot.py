@@ -8,20 +8,7 @@ from numpy.random import normal
 class Robot():
     def __init__(self, x, y, theta, change_t, alpha1, alpha2, alpha3, alpha4, truth_file=None):
         self._use_truth_data = False
-        if truth_file is not None:
-            truth_file = path.abspath(path.join(path.dirname(
-            __file__), truth_file))
-            truth = loadmat(truth_file)
-            self.all_x = truth['x'][0]
-            self.all_y = truth['y'][0]
-            self.all_th = truth['th'][0]
-            self.all_v = truth['v'][0]
-            self.all_w = truth['om'][0]
-            self.all_t = truth['t'][0]
-            self._use_truth_data = True
-            self._initialize_position_and_heading(self.all_x, self.all_y, self.all_th, change_t)
-        else:
-            self._initialize_position_and_heading(x, y, theta, change_t)
+        self._initialize_position_and_heading(x, y, theta, change_t)
         self.alpha1 = alpha1
         self.alpha2 = alpha2
         self.alpha3 = alpha3

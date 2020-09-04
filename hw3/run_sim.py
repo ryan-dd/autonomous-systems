@@ -10,8 +10,7 @@ from heading_range_robot.robot_plotter import RobotPlotter, plot_summary
 
 
 def main():
-    matlab_name = "hw3_5_soln_data.mat"
-    robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4, truth_file=matlab_name)
+    robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4)
     ukf = UKF(SAMPLE_PERIOD)
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)

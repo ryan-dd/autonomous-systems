@@ -11,19 +11,11 @@ from heading_range_robot.robot_plotter_hw6 import RobotPlotter, plot_summary
 
 
 def main():
-    data = loadmat('hw6/EKF_SLAM_data.mat')
-    # Unpack data
-    landmarks = data['m']
-    w_c = data['om_c'][0]
-    w = data['om'][0]
-    t = data['t'][0]
-    v = data['v'][0]
-    v_c = data['v_c'][0]
 
     robot = Robot(0, 0, 0, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4)
     ekf = EKF_SLAM(SAMPLE_PERIOD)
     robot_plotter = RobotPlotter()
-    total_time_steps = len(t)
+    total_time_steps = 1000
     robot_plotter.init_plot(robot.actual_position, ekf.mean_belief, ekf.all_features)
 
     all_mean_belief = []
