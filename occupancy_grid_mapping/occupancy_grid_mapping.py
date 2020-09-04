@@ -19,7 +19,7 @@ def L_FREE():
     p = random()*0.1+0.3
     return log(p/(1-p))
 
-data = loadmat("hw5/state_meas_data.mat")
+data = loadmat("occupancy_grid_mapping/state_meas_data.mat")
 states = data['X']
 ranges = data['z'][0]
 where_are_nan = np.isnan(ranges)

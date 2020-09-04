@@ -5,9 +5,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from heading_range_robot.parameters import *
-from hw7.fast_SLAM import FastSLAM
+from fast_slam.fast_SLAM import FastSLAM
 from heading_range_robot.robot import Robot
-from heading_range_robot.robot_plotter_hw7 import RobotPlotter, plot_summary
+from heading_range_robot.robot_plotter_fast_slam import RobotPlotter, plot_summary
 
 
 def main():

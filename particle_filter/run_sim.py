@@ -5,9 +5,9 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from heading_range_robot.parameters import *
-from hw4.particle_filter import ParticleFilter
+from particle_filter.particle_filter import ParticleFilter
 from heading_range_robot.robot import Robot
-from heading_range_robot.robot_plotter_hw4 import RobotPlotter, plot_summary
+from heading_range_robot.robot_plotter_particle_filter import RobotPlotter, plot_summary
 
 
 def main():
@@ -33,5 +33,4 @@ def main():
     plot_summary(all_true_state, all_mean_belief, all_covariance_belief, SAMPLE_PERIOD)
 
 if __name__ == "__main__":
-
     main()

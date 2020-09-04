@@ -4,13 +4,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 from scipy.io import loadmat
 
-from midterm.extended_information_filter import EIF
-from heading_range_robot.robot_plotter_midterm import RobotPlotter
+from extended_information_filter.extended_information_filter import EIF
+from heading_range_robot.robot_plotter_eif import RobotPlotter
 from tools.wrap import wrap
 
 
 def main():
-    data = loadmat('midterm/midterm_data.mat')
+    data = loadmat('extended_information_filter/eif_data.mat')
     # Unpack data
     true_state = data['X_tr']
     true_state = wrap(data['X_tr'], index=2)

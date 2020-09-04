@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from heading_range_robot.parameters import *
-from hw3.unscented_kalman_filter import UKF
+from unscented_kalman_filter.unscented_kalman_filter import UKF
 from heading_range_robot.robot import Robot
 from heading_range_robot.robot_plotter import RobotPlotter, plot_summary
 

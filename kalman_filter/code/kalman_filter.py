@@ -4,7 +4,7 @@ from numpy.linalg import multi_dot, inv
 from scipy.signal import cont2discrete
 from matplotlib import pyplot as plt
 
-from hw1.code.parameters import *
+from kalman_filter.code.parameters import *
 
 
 def main():
