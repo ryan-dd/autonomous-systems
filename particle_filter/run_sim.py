@@ -12,7 +12,7 @@ from heading_range_robot.robot_plotter_particle_filter import RobotPlotter, plot
 
 def main():
     robot = Robot(INITIAL_X, INITIAL_Y, INITIAL_THETA, SAMPLE_PERIOD, ALPHA1, ALPHA2, ALPHA3, ALPHA4) 
-    pkf = ParticleFilter(SAMPLE_PERIOD, number_of_particles=1000)
+    pkf = ParticleFilter(SAMPLE_PERIOD, number_of_particles=400)
     robot_plotter = RobotPlotter()
     total_time_steps = int(TOTAL_TIME/SAMPLE_PERIOD)
     robot_plotter.init_plot(robot.x, robot.y, robot.theta, LANDMARKS, particles=pkf.particles)

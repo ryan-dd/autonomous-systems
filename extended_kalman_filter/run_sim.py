@@ -27,8 +27,8 @@ def main():
         ekf.prediction_step(theta_prev, robot.vc, robot.wc)
         
         ekf.measurement_step(robot.actual_position)      
-        robot_plotter.update_plot(robot.x, robot.y, robot.theta)
-
+        robot_plotter.update_plot(robot.x, robot.y, robot.theta, ekf.mean_belief[0], ekf.mean_belief[1])
+        
         all_true_state.append(np.copy(np.copy(robot.actual_position)))
         all_mean_belief.append(np.copy(ekf.mean_belief))
         all_covariance_belief.append(np.copy(ekf.covariance_belief))

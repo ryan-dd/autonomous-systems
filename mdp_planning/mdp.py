@@ -51,6 +51,7 @@ V = np.zeros((Np, Np)) + 1000*goal
 # Plot full_map
 plt.ion()
 fig, ax = plt.subplots()
+plt.title("Start")
 im = ax.imshow(V.T, origin="lower")
 cb = fig.colorbar(im)
 plt.draw()
@@ -134,5 +135,6 @@ while iteration < 500:
     all_y.append(y)
     iteration += 1
 plt.plot(all_x,all_y)
+plt.title("MDP Policy")
 fig.canvas.draw_idle()
 plt.waitforbuttonpress()

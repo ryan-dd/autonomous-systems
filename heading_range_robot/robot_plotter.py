@@ -2,11 +2,13 @@ from math import cos, sin
 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.lines as lines
+from matplotlib.lines import Line2D
 import numpy as np
 
 class RobotPlotter:
-    def __init__(self):
-        pass
+    def __init__(self, radius=1):
+        self.radius = radius
 
     def init_plot(self, x, y, theta, landmarks):
         plt.ion()
@@ -14,30 +16,46 @@ class RobotPlotter:
         main_ax = ax
         self._fig = fig
         self._main_ax = main_ax
-        main_ax.set_xlim(-20,20)
-        main_ax.set_ylim(-20,20)
+        main_ax.set_xlim(-10, 10)
+        main_ax.set_ylim(-10, 10)
+        main_ax.grid()
+        
         landmarks = np.array(landmarks)
-        main_ax.scatter(
-            landmarks[:,0], landmarks[:,1])
-        self.plot_robot(x, y, theta)
+        main_ax.scatter(landmarks[:,0], landmarks[:,1], label="Landmarks")
+        
+        self.initialize_robot(x, y, theta)
+        custom_lines = [Line2D([0], [0], color='blue'),
+                Line2D([0], [0], color='red'),]
+        plt.legend(custom_lines, ['Actual Path', 'Estimated Path'])
         plt.draw()
 
-    def update_plot(self, x, y, theta):
+    def update_plot(self, x, y, theta, x_est, y_est):
         self.remove_for_next_step()
-        self.plot_robot(x, y, theta)
+        self.update_robot(x, y, theta, x_est, y_est)
         self._fig.canvas.draw_idle()
         plt.pause(0.0001)
 
-    def plot_robot(self, x, y, theta):
-        radius = 1
-        self.circle = plt.Circle((x, y), radius, fill=False)
+    def update_robot(self, x, y, theta, x_est, y_est):
+        self.circle.center = x, y
+        self.arrow = patches.Arrow(x, y, self.radius*cos(theta), self.radius*sin(theta))
+        self._main_ax.add_patch(self.arrow)
+        self._main_ax.plot([self.prev_position[0], x], [self.prev_position[1], y], c='blue')
+        self._main_ax.plot([self.prev_est[0], x_est], [self.prev_est[1], y_est], c='red')
+        # l1 = lines.Line2D(self.prev_position, [x, y])
+        # self._main_ax.lines.extend([l1])
+        self.prev_position = [x, y]
+        self.prev_est = [x_est, y_est]
+        
+    def initialize_robot(self, x, y, theta):
+        self.circle = plt.Circle((x, y), self.radius, fill=False)
         self._main_ax.add_artist(self.circle)
-        # self.arrow = patches.Arrow(x, y, x+cos(radius), y+sin(radius))
-        # self._main_ax.add_patch(self.arrow)
+        self.arrow = patches.Arrow(x, y, self.radius*cos(theta), self.radius*sin(theta))
+        self._main_ax.add_patch(self.arrow)
+        self.prev_position = [x, y]
+        self.prev_est = [x, y]
 
     def remove_for_next_step(self):
-        self.circle.remove()
-        # self.arrow.remove()
+        self.arrow.remove()
 
 def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, sample_period):
     time_steps = list(range(len(all_true_states)))
@@ -60,13 +78,13 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     var_beliefs_about_theta = all_variance_belief[:, 2, 2]
 
     # Add static plots
-    _, axes = plt.subplots(3, 2, figsize=(15, 15))
+    fig, axes = plt.subplots(3, 2, figsize=(15, 7))
     ax1 = axes[0, 0]
     ax2 = axes[1, 0]
     ax3 = axes[1, 1]
     ax4 = axes[0, 1]
     ax5 = axes[2, 0]
-    ax6 = axes[2, 1]
+    fig.delaxes(axes[2][1])
 
     ax1.plot(time_steps_in_seconds, true_x)
     ax1.plot(time_steps_in_seconds, mean_beliefs_about_x, '--')
@@ -125,5 +143,6 @@ def plot_summary(all_true_states, all_mean_belief, all_variance_belief, all_kt, 
     ax5.legend(["X kalman gain range", "Y kalman gain range", "Theta Kalman Gain range",
             "X kalman gain bearing", "Y kalman gain bearing", "Theta Kalman Gain bearing"])
 
+    plt.tight_layout()
     plt.show()
-    plt.pause(200)
+    plt.pause(50)

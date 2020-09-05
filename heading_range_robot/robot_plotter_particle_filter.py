@@ -22,6 +22,7 @@ class RobotPlotter:
         self.plot_robot(x, y, theta)
         if particles is not None:
             self.particles_scatter = main_ax.scatter(particles[:,0], particles[:,1])
+            self.particles_len = len(particles)
         plt.draw()
 
     def update_plot(self, x, y, theta, particles=None):
@@ -29,7 +30,7 @@ class RobotPlotter:
         self.plot_robot(x, y, theta)
         self._fig.canvas.draw_idle()
         if particles is not None:
-            self.particles_scatter.set_offsets(np.array(particles)[:,:2].reshape(1000,2))
+            self.particles_scatter.set_offsets(np.array(particles)[:,:2].reshape(self.particles_len,2))
         plt.pause(0.0001)
 
     def plot_robot(self, x, y, theta):

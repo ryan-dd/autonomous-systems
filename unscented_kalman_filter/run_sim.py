@@ -26,7 +26,7 @@ def main():
         ukf.prediction_step(robot)
         
         ukf.measurement_step(robot.actual_position, robot)      
-        robot_plotter.update_plot(robot.x, robot.y, robot.theta)
+        robot_plotter.update_plot(robot.x, robot.y, robot.theta, ukf.mean_belief[0], ukf.mean_belief[1])
 
         all_true_state.append(np.copy(np.copy(robot.actual_position)))
         all_mean_belief.append(np.copy(ukf.mean_belief))
